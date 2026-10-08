@@ -63,24 +63,24 @@ export default function Playground() {
   return <div className="space-y-5">
     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
       <div><div className="eyebrow">IDE · Praxis-P</div><h1 className="text-3xl font-bold">Playground</h1><p className="text-slate-400 mt-2">Escribe, analiza y ejecuta programas Praxis-P con diagnóstico visible.</p></div>
-      <div className="flex gap-2"><button className="btn-secondary" onClick={reset}><RotateCcw size={15}/> Restablecer</button><button className="btn-primary" onClick={run} disabled={busy}><Play size={15}/>{busy ? "Ejecutando…" : "Ejecutar"}</button></div>
+      <div className="flex gap-2 flex-wrap"><button className="btn-secondary" onClick={reset}><RotateCcw size={15}/> Restablecer</button><button className="btn-primary" onClick={run} disabled={busy}><Play size={15}/>{busy ? "Ejecutando…" : "Ejecutar"}</button></div>
     </div>
 
     <div className="grid xl:grid-cols-[1.15fr_.85fr] gap-4">
       <div className="panel overflow-hidden">
-        <div className="p-3 border-b border-blue-950 flex items-center justify-between"><span className="code text-xs">main.prax</span><span className="badge"><WandSparkles size={11}/> {analysis.ast.statements.length} instrucciones</span></div>
+        <div className="p-3 border-b border-neutral-800 flex items-center justify-between"><span className="code text-xs">main.prax</span><span className="badge"><WandSparkles size={11}/> {analysis.ast.statements.length} instrucciones</span></div>
         <div className="code-editor">
           <pre className="syntax-layer" aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlight(code) + "\n" }} />
           <textarea ref={editorRef} spellCheck={false} value={code} onChange={e => setCode(e.target.value)} onScroll={syncScroll} className="code-input" aria-label="Editor de código Praxis-P" />
         </div>
       </div>
       <div className="panel overflow-hidden">
-        <div className="p-2 border-b border-blue-950 flex gap-1">
+        <div className="p-2 border-b border-neutral-800 flex gap-1">
           {([["runtime","Runtime",Terminal],["tokens","Tokens",Braces],["ast","AST",Bug],["graph","Graph",GitBranch]] as const).map(([id,label,Icon]) =>
             <button key={id} onClick={() => setTab(id)} className={`tab-btn ${tab === id ? "tab-active" : ""}`}><Icon size={14}/>{label}</button>
           )}
         </div>
-        <pre className="code whitespace-pre-wrap p-5 text-xs leading-5 text-slate-300 min-h-[560px] overflow-auto">{JSON.stringify(view, null, 2)}</pre>
+        <pre className="output-code">{JSON.stringify(view, null, 2)}</pre>
       </div>
     </div>
 

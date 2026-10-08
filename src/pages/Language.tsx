@@ -9,19 +9,20 @@ const items = [
   ["guard", "Impone permisos, límites y condiciones."]
 ];
 
-const grammar = \`program := statement*
-statement := let | agent | tool | memory | evidence | guard | parallel | run
-agent := "agent" IDENT "{" property* "}"
-run := "run" IDENT ("with" object)?
-cycle := "[" IDENT ("," IDENT)* "]"
-object := "{" pair* "}"\`;
+const grammar = [
+  "program := statement*",
+  "statement := let | agent | tool | memory | evidence | guard | parallel | run",
+  'agent := "agent" IDENT "{" property* "}"',
+  'run := "run" IDENT ("with" object)?',
+  'cycle := "[" IDENT ("," IDENT)* "]"',
+  'object := "{" pair* "}"'
+].join("\\n");
 
 function highlight(source: string) {
   const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c] ?? c));
   let html = esc(source);
   html = html.replace(/(&quot;.*?&quot;)/g, '<span class="tok-string">$1</span>');
   html = html.replace(/\b(program|statement|agent|tool|memory|evidence|guard|parallel|run|let|cycle|object|property|IDENT)\b/g, '<span class="tok-keyword">$1</span>');
-  html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-number">$1</span>');
   return html;
 }
 

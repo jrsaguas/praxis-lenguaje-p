@@ -1,0 +1,80 @@
+[
+  {
+    "name": "web.search",
+    "description": "Buscar fuentes p�blicas para una consulta.",
+    "input": "query: string",
+    "output": "results: SearchResult[]",
+    "required": "query",
+    "permission": "web.read",
+    "limit": "5 resultados por llamada",
+    "dependencies": "web connector",
+    "tests": "consulta normal; vac�a; sin resultados",
+    "evidence": "URL y fecha por resultado",
+    "confidence": "0.75"
+  },
+  {
+    "name": "filesystem.read",
+    "description": "Leer un archivo autorizado.",
+    "input": "path: string",
+    "output": "content: string",
+    "required": "path",
+    "permission": "filesystem.read",
+    "limit": "Solo rutas autorizadas",
+    "dependencies": "sandbox de archivos",
+    "tests": "v�lida; inexistente; acceso denegado",
+    "evidence": "ruta y hash opcional",
+    "confidence": "0.95"
+  },
+  {
+    "name": "github.commit",
+    "description": "Crear un commit expl�citamente autorizado.",
+    "input": "tree: FileChange[]",
+    "output": "commit: CommitRef",
+    "required": "tree",
+    "permission": "github.write",
+    "limit": "requiere confirmaci�n",
+    "dependencies": "GitHub API",
+    "tests": "�rbol v�lido; sin cambios; sin permisos",
+    "evidence": "SHA del commit",
+    "confidence": "0.9"
+  },
+  {
+    "name": "evidence.record",
+    "description": "Registrar una fuente y afirmaci�n.",
+    "input": "source: URI, claim: string",
+    "output": "evidence_id: string",
+    "required": "source, claim",
+    "permission": "evidence.write",
+    "limit": "una afirmaci�n por registro",
+    "dependencies": "registro de evidencias",
+    "tests": "fuente v�lida; claim vac�o; duplicado",
+    "evidence": "URI, extracto, fecha",
+    "confidence": "0.9"
+  },
+  {
+    "name": "data.query",
+    "description": "Consultar un conjunto de datos permitido.",
+    "input": "query: string",
+    "output": "rows: object[]",
+    "required": "query",
+    "permission": "data.read",
+    "limit": "solo lectura; l�mite de filas",
+    "dependencies": "adaptador de datos",
+    "tests": "v�lida; inv�lida; sin filas",
+    "evidence": "consulta y conteo",
+    "confidence": "0.85"
+  },
+  {
+    "name": "shell.run",
+    "description": "Ejecutar un comando dentro de un entorno restringido.",
+    "input": "command: string",
+    "output": "stdout, stderr, exitCode",
+    "required": "command",
+    "permission": "shell.restricted",
+    "limit": "allowlist, timeout y aislamiento",
+    "dependencies": "runner aislado",
+    "tests": "permitido; bloqueado; timeout",
+    "evidence": "comando normalizado y exit code",
+    "confidence": "0.8"
+  }
+]

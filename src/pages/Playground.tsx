@@ -59,6 +59,7 @@ export default function Playground() {
   function reset() { setCode(sample); setOut("Restablecido."); }
 
   const view = tab === "tokens" ? analysis.tokens : tab === "ast" ? analysis.ast : tab === "graph" ? { nodes: analysis.ast.statements.filter(s => "name" in s).map(s => ({ id: s.name, kind: s.type })), edges: analysis.ast.statements.filter(s => s.type === "Run").map(s => ({ from: "run:" + s.line, to: s.target, relation: "targets" })) } : out;
+  const traceEvents = useMemo((): Array<{ event?: string; status?: string; [key: string]: unknown }> => { try { const result = JSON.parse(out) as { trace?: Array<{ event?: string; status?: string; [key: string]: unknown }> }; return Array.isArray(result.trace) ? result.trace : []; } catch { return []; } }, [out]);
 
   return <div className="space-y-5">
     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
@@ -89,5 +90,13 @@ export default function Playground() {
       {analysis.diagnostics.length === 0 ? <p className="text-xs text-emerald-400 mt-2">Sintaxis estructural válida para el parser v0.3.</p> :
         <div className="mt-3 space-y-1">{analysis.diagnostics.map((d, i) => <div key={i} className="text-xs text-red-300 code">L{d.line}:C{d.column} · {d.message}</div>)}</div>}
     </div>
+
+    <details className="panel overflow-hidden">
+      <summary className="trace-summary"><span><Terminal size={15}/> Traza de ejecución</span><span className="badge">{traceEvents.length} eventos · desplegable</span></summary>
+      {traceEvents.length ? <div className="trace-list">{traceEvents.map((event, index) => <details key={index} className="trace-event">
+        <summary><span className="trace-index">{String(index + 1).padStart(2, "0")}</span><code>{event.event ?? "evento"}</code><span className={`trace-status ${event.status === "error" ? "status-bad" : event.status === "simulated" ? "trace-simulated" : ""}`}>{event.status ?? "info"}</span></summary>
+        <pre className="trace-detail">{JSON.stringify(event, null, 2)}</pre>
+      </details>)}</div> : <p className="trace-empty">Ejecuta un programa para inspeccionar cada evento. Cada fila se puede desplegar para consultar sus datos.</p>}
+    </details>
   </div>;
 }

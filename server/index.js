@@ -1,88 +1,34 @@
 import express from "express";
 import cors from "cors";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
-
-function parseProgram(code) {
-  const lines = code.split(/\r?\n/);
-  const variables = {};
-  const blocks = [];
-  const trace = [];
-  let active = null;
-  for (let n = 0; n < lines.length; n++) {
-    const line = lines[n].trim();
-    if (!line || line.startsWith("//")) continue;
-    const letMatch = line.match(/^let\s+([A-Za-z_][\w-]*)\s*=\s*(.+)$/);
-    if (letMatch) { variables[letMatch[1]] = normalizeValue(letMatch[2]); trace.push({ type: "let", line: n + 1, name: letMatch[1] }); continue; }
-    const blockMatch = line.match(/^(agent|tool|memory|evidence|guard|parallel)(?:\s+([A-Za-z_][\w-]*))?\s*\{?/);
-    if (blockMatch) { active = { type: blockMatch[1], name: blockMatch[2] || "parallel_" + (blocks.length + 1), properties: {}, line: n + 1 }; blocks.push(active); trace.push({ type: "block.declare", line: n + 1, block: active.type, name: active.name }); continue; }
-    if (line === "}") { active = null; continue; }
-    if (active) {
-      const prop = line.match(/^([A-Za-z_][\w-]*)\s*:\s*(.+)$/);
-      if (prop) { active.properties[prop[1]] = normalizeValue(prop[2]); trace.push({ type: "property", line: n + 1, block: active.name, key: prop[1] }); continue; }
-    }
-    const runMatch = line.match(/^run\s+([A-Za-z_][\w-]*)/);
-    if (runMatch) trace.push({ type: "run", line: n + 1, agent: runMatch[1], status: "planned" });
-  }
-  return { variables, blocks, trace };
-}
-function normalizeValue(value) {
-  const v = String(value).trim();
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v.slice(1, -1);
-  if (v === "true" || v === "false") return v === "true";
-  if (!Number.isNaN(Number(v))) return Number(v);
-  if (v.startsWith("[") && v.endsWith("]")) return v.slice(1, -1).split(",").map(x => normalizeValue(x));
-  return { ref: v };
-}
-function buildGraph(program) {
-  const nodes = program.blocks.map(b => ({ id: b.name, kind: b.type, properties: b.properties }));
-  const edges = [];
-  for (const run of program.trace.filter(x => x.type === "run")) {
-    nodes.push({ id: "run:" + run.agent + ":" + run.line, kind: "execution", target: run.agent });
-    edges.push({ from: "run:" + run.agent + ":" + run.line, to: run.agent, relation: "targets" });
-  }
-  for (const b of program.blocks) {
-    const deps = b.properties.requires;
-    if (deps) for (const ref of Array.isArray(deps) ? deps : [deps]) {
-      const target = typeof ref === "object" && ref.ref ? ref.ref : String(ref);
-      edges.push({ from: b.name, to: target, relation: "requires" });
-    }
-  }
-  return { nodes, edges };
-}
-function execute(code) {
-  const program = parseProgram(code);
-  const graph = buildGraph(program);
-  const names = new Set(program.blocks.map(b => b.name));
-  const duplicateNames = program.blocks.map(b => b.name).filter((name, idx, all) => all.indexOf(name) !== idx);
-  const cycleNodes = new Set();
-  const requires = new Map(program.blocks.map(b => [b.name, (Array.isArray(b.properties.requires) ? b.properties.requires : b.properties.requires ? [b.properties.requires] : []).map(x => typeof x === "object" && x.ref ? x.ref : String(x))]));
-  function visit(name, stack = []) {
-    if (stack.includes(name)) { stack.slice(stack.indexOf(name)).forEach(x => cycleNodes.add(x)); return; }
-    for (const target of requires.get(name) || []) if (names.has(target)) visit(target, [...stack, name]);
-  }
-  for (const name of names) visit(name);
-  const errors = [
-    ...graph.edges.filter(e => e.relation === "requires" && !names.has(e.to)).map(e => "Dependencia no resuelta: " + e.from + " requiere " + e.to),
-    ...program.trace.filter(e => e.type === "run" && !names.has(e.agent)).map(e => "Objetivo no resuelto: " + e.agent),
-    ...duplicateNames.map(name => "Nombre duplicado: " + name),
-    ...(cycleNodes.size ? ["Ciclo de dependencias detectado: " + [...cycleNodes].join(" -> ")] : [])
-  ];
-  return { ok: errors.length === 0, language: "Praxis-P", version: "0.3.0", program: { lines: code.split(/\r?\n/).length, variables: program.variables, blocks: program.blocks }, trace: program.trace, graph, validation: { errors, resolved: errors.length === 0, counts: { blocks: program.blocks.length, edges: graph.edges.length } } };
-}
-app.get("/api/health", (_, res) => res.json({ ok: true, service: "praxis-p-runtime", version: "0.3.0", port: PORT }));
-app.post("/api/execute", (req, res) => {
-  try { res.json(execute(String(req.body?.code ?? ""))); }
-  catch (error) { res.status(400).json({ ok: false, error: String(error) }); }
-});
-app.post("/api/analyze", (req, res) => {
-  try {
-    const code = String(req.body?.code ?? "");
-    const result = parseProgram(code);
-    res.json({ ok: true, language: "Praxis-P", version: "0.3.0", ...result });
-  } catch (error) { res.status(400).json({ ok: false, error: String(error) }); }
-});
-const PORT = Number(process.env.PORT || 8788);
-app.listen(PORT, () => console.log(`Praxis-P runtime listening on http://localhost:${PORT}`));
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const REGISTRY = path.join(ROOT, "tools.json");
+const seedTools = [
+  {name:"web.search",description:"Buscar fuentes públicas para una consulta.",input:"query: string",output:"results: SearchResult[]",required:"query",permission:"web.read",limit:"5 resultados por llamada",dependencies:"web connector",tests:"consulta normal; vacía; sin resultados",evidence:"URL y fecha por resultado",confidence:"0.75"},
+  {name:"filesystem.read",description:"Leer un archivo autorizado.",input:"path: string",output:"content: string",required:"path",permission:"filesystem.read",limit:"Solo rutas autorizadas",dependencies:"sandbox de archivos",tests:"válida; inexistente; acceso denegado",evidence:"ruta y hash opcional",confidence:"0.95"},
+  {name:"github.commit",description:"Crear un commit explícitamente autorizado.",input:"tree: FileChange[]",output:"commit: CommitRef",required:"tree",permission:"github.write",limit:"requiere confirmación",dependencies:"GitHub API",tests:"árbol válido; sin cambios; sin permisos",evidence:"SHA del commit",confidence:"0.9"},
+  {name:"evidence.record",description:"Registrar una fuente y afirmación.",input:"source: URI, claim: string",output:"evidence_id: string",required:"source, claim",permission:"evidence.write",limit:"una afirmación por registro",dependencies:"registro de evidencias",tests:"fuente válida; claim vacío; duplicado",evidence:"URI, extracto, fecha",confidence:"0.9"},
+  {name:"data.query",description:"Consultar un conjunto de datos permitido.",input:"query: string",output:"rows: object[]",required:"query",permission:"data.read",limit:"solo lectura; límite de filas",dependencies:"adaptador de datos",tests:"válida; inválida; sin filas",evidence:"consulta y conteo",confidence:"0.85"},
+  {name:"shell.run",description:"Ejecutar un comando dentro de un entorno restringido.",input:"command: string",output:"stdout, stderr, exitCode",required:"command",permission:"shell.restricted",limit:"allowlist, timeout y aislamiento",dependencies:"runner aislado",tests:"permitido; bloqueado; timeout",evidence:"comando normalizado y exit code",confidence:"0.8"}
+];
+function loadTools(){try{const v=JSON.parse(fs.readFileSync(REGISTRY,"utf8"));return Array.isArray(v)?v:seedTools}catch{return seedTools}}
+let tools = loadTools();
+function saveTools(){fs.writeFileSync(REGISTRY,JSON.stringify(tools,null,2),"utf8")}
+function parseValue(raw){const v=String(raw??"").trim();if(!v)return null;if((v.startsWith('"')&&v.endsWith('"'))||(v.startsWith("'")&&v.endsWith("'")))return v.slice(1,-1);if(v==="true"||v==="false")return v==="true";if(!Number.isNaN(Number(v)))return Number(v);if(v.startsWith("[")&&v.endsWith("]"))return v.slice(1,-1).split(",").map(parseValue);const call=v.match(/^([\w.-]+)\((.*)\)$/);if(call)return {call:call[1],args:parseValue(call[2])};if(v.startsWith("{")&&v.endsWith("}")){const obj={};for(const part of v.slice(1,-1).split(",")){const m=part.trim().match(/^([\w-]+)\s*:\s*(.*)$/);if(m)obj[m[1]]=parseValue(m[2])}return obj}return {ref:v}}
+function parseProgram(code){const lines=code.split(/\r?\n/),variables={},blocks=[],trace=[];let active=null,runBuffer="";for(let n=0;n<lines.length;n++){const raw=lines[n],line=raw.trim();if(!line||line.startsWith("//"))continue;const lm=line.match(/^let\s+([\w-]+)\s*=\s*(.+)$/);if(lm){variables[lm[1]]=parseValue(lm[2]);trace.push({event:"variable.set",line:n+1,name:lm[1],status:"ok"});continue}const bm=line.match(/^(agent|tool|memory|evidence|guard|parallel)(?:\s+([\w-]+))?\s*\{?$/);if(bm){active={type:bm[1],name:bm[2]||bm[1]+"_"+(blocks.length+1),properties:{},line:n+1};blocks.push(active);trace.push({event:"block.declared",line:n+1,block:active.type,name:active.name,status:"ok"});continue}if(line==="}"){active=null;continue}if(active){const pm=line.match(/^([\w-]+)\s*:\s*(.+)$/);if(pm){active.properties[pm[1]]=parseValue(pm[2]);trace.push({event:"property.read",line:n+1,block:active.name,key:pm[1],status:"ok"});continue}}const rm=line.match(/^run\s+([\w-]+)(?:\s+with\s+(.+))?$/);if(rm){trace.push({event:"run.requested",line:n+1,target:rm[1],args:rm[2]?parseValue(rm[2]):{},status:"pending"});continue}if(line==="{"||line==="}")continue;trace.push({event:"syntax.unrecognized",line:n+1,source:line,status:"warning"})}return {variables,blocks,trace}}
+function buildGraph(program){const nodes=program.blocks.map(b=>({id:b.name,kind:b.type,properties:b.properties})),edges=[];for(const r of program.trace.filter(x=>x.event==="run.requested")){const id="run:"+r.target+":"+r.line;nodes.push({id,kind:"execution",target:r.target});edges.push({from:id,to:r.target,relation:"targets"})}for(const b of program.blocks){const deps=b.properties.requires;if(deps){for(const ref of (Array.isArray(deps)?deps:[deps])){const target=typeof ref==="object"&&ref.ref?ref.ref:String(ref);edges.push({from:b.name,to:target,relation:"requires"})}}}return {nodes,edges}}
+function execute(code){const program=parseProgram(code),graph=buildGraph(program),names=new Map(),errors=[],warnings=[],trace=[...program.trace];for(const b of program.blocks){if(names.has(b.name))errors.push("Nombre duplicado: "+b.name);names.set(b.name,b)}for(const e of graph.edges.filter(e=>e.relation==="requires"))if(!names.has(e.to))errors.push("Dependencia no resuelta: "+e.from+" requiere "+e.to);for(const r of trace.filter(x=>x.event==="run.requested")){const target=names.get(r.target);if(!target){r.status="error";errors.push("Objetivo no resuelto: "+r.target);trace.push({event:"run.failed",line:r.line,target:r.target,status:"error",reason:"target_not_found"});continue}if(target.type!=="agent"){r.status="error";errors.push("run requiere un agente, no "+target.type+": "+r.target);continue}r.status="validated";const cycle=target.properties.cycle;const steps=Array.isArray(cycle)?cycle.map(x=>typeof x==="object"?x.ref:String(x)):["observe","analyze","verify","report"];trace.push({event:"agent.started",line:r.line,agent:target.name,goal:target.properties.goal??null,arguments:r.args??{},status:"running"});for(const step of steps)trace.push({event:"cycle.step",agent:target.name,step:typeof step==="object"?step.ref:step,status:"simulated",note:"Paso registrado; no invoca un modelo externo."});trace.push({event:"agent.completed",agent:target.name,status:"simulated",steps:steps.length})}
+for(const b of program.blocks.filter(b=>b.type==="tool")){const required=String(b.properties.required??"").split(/[ ,]+/).filter(Boolean);const inputs=String(b.properties.input??"").split(/[ ,]+/).map(x=>x.split(":")[0]);for(const field of required)if(!inputs.includes(field))errors.push("Contrato "+b.name+": campo requerido '"+field+"' no aparece en input");if(!b.properties.permission)warnings.push("Contrato "+b.name+": falta declarar permission");if(!b.properties.output)warnings.push("Contrato "+b.name+": falta declarar output")}
+const cycleNodes=new Set(),deps=new Map(program.blocks.map(b=>[b.name,(Array.isArray(b.properties.requires)?b.properties.requires:b.properties.requires?[b.properties.requires]:[]).map(x=>typeof x==="object"&&x.ref?x.ref:String(x))]));function visit(name,stack=[]){if(stack.includes(name)){stack.slice(stack.indexOf(name)).forEach(x=>cycleNodes.add(x));return}for(const to of deps.get(name)||[])if(names.has(to))visit(to,[...stack,name])}for(const name of names.keys())visit(name);if(cycleNodes.size)errors.push("Ciclo de dependencias detectado: "+[...cycleNodes].join(" -> "));trace.push({event:"validation.completed",status:errors.length?"error":"ok",errors:errors.length,warnings:warnings.length});return {ok:errors.length===0,language:"Praxis-P",version:"0.4.0",program:{lines:code.split(/\r?\n/).length,variables:program.variables,blocks:program.blocks},trace,graph,validation:{errors,warnings,resolved:errors.length===0,counts:{blocks:program.blocks.length,edges:graph.edges.length,trace:trace.length}}}}
+app.get("/api/health",(_,res)=>res.json({ok:true,service:"praxis-p-runtime",version:"0.4.0",port:PORT,tools:tools.length}));
+app.get("/api/tools",(_,res)=>res.json({ok:true,tools}));
+app.put("/api/tools",(req,res)=>{if(!Array.isArray(req.body?.tools))return res.status(400).json({ok:false,error:"tools debe ser un arreglo"});const seen=new Set();for(const t of req.body.tools){if(!t||typeof t.name!=="string"||!t.name.trim())return res.status(400).json({ok:false,error:"Cada contrato necesita name"});if(seen.has(t.name))return res.status(400).json({ok:false,error:"ID duplicado: "+t.name});seen.add(t.name)}tools=req.body.tools;saveTools();res.json({ok:true,count:tools.length,tools})});
+app.post("/api/analyze",(req,res)=>{try{const code=String(req.body?.code??"");res.json({ok:true,language:"Praxis-P",version:"0.4.0",...parseProgram(code)})}catch(e){res.status(400).json({ok:false,error:String(e)})}});
+app.post("/api/execute",(req,res)=>{try{res.json(execute(String(req.body?.code??"")))}catch(e){res.status(400).json({ok:false,error:String(e)})}});
+const PORT=Number(process.env.PORT||8788);app.listen(PORT,"0.0.0.0",()=>console.log("Praxis-P runtime listening on http://0.0.0.0:"+PORT));

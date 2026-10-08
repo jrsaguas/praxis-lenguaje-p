@@ -1,23 +1,25 @@
 import { NavLink } from "react-router-dom";
+import { Activity, Bot, Braces, ChevronRight, Code2, FileCode2, GitBranch, Home, Settings, ShieldCheck, Wrench } from "lucide-react";
 
 const nav = [
-  ["/", "⌂ Inicio"], ["/playground", "▶ Playground"], ["/lenguaje", "{} Lenguaje"],
-  ["/agentes", "◎ Agentes"], ["/herramientas", "◆ Herramientas"], ["/flujos", "◇ Flujos"],
-  ["/compilador", "<> Compilador / AST"], ["/docs", "▤ Documentación"], ["/configuracion", "⚙ Configuración"]
+  ["/", "Inicio", Home], ["/playground", "Playground", Code2], ["/lenguaje", "Lenguaje", Braces],
+  ["/agentes", "Agentes", Bot], ["/herramientas", "Herramientas", Wrench], ["/flujos", "Flujos", GitBranch],
+  ["/compilador", "Compilador / AST", FileCode2], ["/docs", "Documentación", ShieldCheck], ["/configuracion", "Configuración", Settings]
 ] as const;
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return <div className="min-h-screen app-shell">
-    <aside className="fixed inset-y-0 left-0 w-64 border-r border-neutral-800 bg-neutral-950 p-4 sidebar">
-      <div className="px-2 py-4 mb-5"><b className="brand">PRAXIS-P</b><div className="text-[11px] text-neutral-500">Agent Language · 0.3</div></div>
-      <nav className="space-y-1">{nav.map(([to,label]) =>
-        <NavLink key={to} to={to} className={({isActive}) => `nav-item ${isActive ? "active" : ""}`}>{label}</NavLink>)}</nav>
-      <div className="mt-8 rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-xs text-neutral-500">
-        <div className="text-neutral-300 font-semibold mb-1">Runtime</div><div>Local · Node.js</div><div>API · :8788</div><div>UI · Vite :5180</div>
-      </div>
+    <aside className="fixed inset-y-0 left-0 w-64 sidebar">
+      <div className="brand-block"><div className="brand-mark">P</div><div><b className="brand">PRAXIS-P</b><div className="brand-sub">AGENT LANGUAGE · 0.3</div></div></div>
+      <div className="nav-caption">WORKSPACE</div>
+      <nav>{nav.map(([to,label,Icon]) =>
+        <NavLink key={to} to={to} className={({isActive}) => isActive ? "nav-item active" : "nav-item"}>
+          <Icon size={15}/><span>{label}</span>{to === "/playground" && <span className="nav-live">LIVE</span>}<ChevronRight className="nav-chevron" size={13}/>
+        </NavLink>)}</nav>
+      <div className="runtime-card"><div className="runtime-head"><span className="runtime-pulse"/><b>RUNTIME ONLINE</b></div><div className="runtime-row"><span>Node.js API</span><code>:8788</code></div><div className="runtime-row"><span>Vite UI</span><code>:5180</code></div><div className="runtime-foot"><Activity size={12}/> local development</div></div>
     </aside>
     <main className="md:ml-64 min-h-screen main">
-      <header className="sticky top-0 z-20 topbar"><span>Praxis Agent Development Environment</span><span className="status-dot"><span/> local runtime ready</span></header>
+      <header className="sticky top-0 z-20 topbar"><div className="crumb"><span>PRAXIS-P</span><i>/</i><b>DEVELOPMENT ENVIRONMENT</b></div><span className="status-dot"><span/> runtime ready</span></header>
       <div className="content">{children}</div>
     </main>
   </div>;

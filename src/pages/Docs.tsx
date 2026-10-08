@@ -1,46 +1,90 @@
-import { BookOpen, Code2, Play, ShieldCheck, TerminalSquare } from "lucide-react";
+import { BookOpen, Code2, Play, ShieldCheck, TerminalSquare, Wrench, LockKeyhole, Database, GitBranch, CircleAlert } from "lucide-react";
 
-const example = `let objetivo = "investigar"
+const example = [
+  'let objetivo = "investigar"',
+  "",
+  "agent investigador {",
+  '  role: "researcher"',
+  "  goal: objetivo",
+  "  cycle: [observe, analyze, verify, report]",
+  '  policy: "read-only"',
+  "}",
+  "",
+  "tool buscador {",
+  '  permission: "web.read"',
+  "  limit: 5",
+  "}",
+  "",
+  "evidence fuente {",
+  '  source: "documento"',
+  "  confidence: 0.9",
+  "}",
+  "",
+  "guard validar {",
+  "  condition: objetivo",
+  "}",
+  "",
+  "run investigador"
+].join("\n");
 
-agent investigador {
-  role: "researcher"
-  goal: objetivo
-  cycle: [observe, analyze, verify, report]
+const grammar = [
+  "program := statement*",
+  "statement := let | agent | tool | memory | evidence | guard | parallel | run",
+  'agent := "agent" IDENT "{" property* "}"',
+  'tool := "tool" IDENT "{" property* "}"',
+  'run := "run" IDENT ("with" object)?',
+  'cycle := "[" IDENT ("," IDENT)* "]"',
+  'object := "{" pair* "}"'
+].join("\n");
+
+function highlight(source: string) {
+  const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c] ?? c));
+  let html = esc(source);
+  html = html.replace(/(\/\/.*)$/gm, '<span class="tok-comment">$1</span>');
+  html = html.replace(/(&quot;.*?&quot;)/g, '<span class="tok-string">$1</span>');
+  html = html.replace(/\b(agent|tool|memory|evidence|guard|parallel|run|let|role|goal|cycle|policy|permission|limit|source|confidence|condition|input|output|requires|test|claim|on|allow|deny|steps|mode)\b/g, '<span class="tok-keyword">$1</span>');
+  html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-number">$1</span>');
+  return html;
 }
 
-tool buscador {
-  permission: "web.read"
-  limit: 5
+function CodeBlock({ code, label }: { code: string; label: string }) {
+  return <div className="doc-code-shell">
+    <div className="doc-code-head"><span className="file-dot" />{label}<span className="doc-code-lang">PRAXIS-P</span></div>
+    <pre className="doc-code"><code dangerouslySetInnerHTML={{ __html: highlight(code) }} /></pre>
+  </div>;
 }
-
-evidence fuente {
-  source: "documento"
-  confidence: 0.9
-}
-
-run investigador`;
 
 export default function Docs() {
   return <div className="page-stack docs-page">
-    <div className="page-heading"><div><div className="eyebrow">Praxis-P · Developer documentation</div><h1>Documentación</h1><p>Aprende la sintaxis, crea programas y entiende cómo se ejecutan.</p></div></div>
-
-    <div className="docs-grid">
-      <section className="panel p-5"><BookOpen size={20}/><h2>¿Dónde programo?</h2><p>En <b>Playground</b>. Es el IDE integrado de Praxis-P: escribe archivos .prax, valida la sintaxis, inspecciona Tokens/AST/Graph y ejecuta contra el runtime local.</p><a className="btn-primary" href="/playground"><Code2 size={15}/> Abrir Playground</a></section>
-      <section className="panel p-5"><TerminalSquare size={20}/><h2>¿Qué necesito?</h2><p>Node.js y npm para el runtime y las herramientas de desarrollo. La interfaz se sirve con Vite. El proyecto incluye scripts para construir y probar.</p><pre className="doc-terminal">{`npm install
-npm run build
-npm run preview`}</pre></section>
-      <section className="panel p-5"><ShieldCheck size={20}/><h2>Principios</h2><p>Praxis-P declara agentes, herramientas, evidencia, permisos, límites y ciclos. La intención es que un programa sea trazable y auditable antes de conectarlo con servicios reales.</p></section>
-      <section className="panel p-5"><Play size={20}/><h2>Flujo de trabajo</h2><ol><li>Escribe el programa.</li><li>Revisa Diagnóstico.</li><li>Inspecciona AST y Graph.</li><li>Pulsa Ejecutar.</li><li>Analiza el resultado del runtime.</li></ol></section>
+    <div className="page-heading docs-hero">
+      <div><div className="eyebrow">PRAXIS-P · DEVELOPER DOCUMENTATION</div><h1>Documentación</h1><p>La referencia para escribir, validar y ejecutar programas Praxis-P con una sintaxis trazable y orientada a agentes.</p></div>
+      <a className="btn-primary" href="/playground"><Code2 size={15}/> Abrir Playground</a>
     </div>
-
-    <section className="panel docs-section"><h2>Sintaxis básica v0.3</h2><pre className="doc-code">{example}</pre></section>
-    <section className="panel docs-section"><h2>Elementos del lenguaje</h2><div className="docs-table">
-      <div><b>let</b><span>Define un valor reutilizable.</span></div>
-      <div><b>agent</b><span>Declara un agente con rol, objetivo y ciclo.</span></div>
-      <div><b>tool</b><span>Declara una capacidad externa con permisos y límites.</span></div>
-      <div><b>evidence</b><span>Describe una fuente y su confianza.</span></div>
-      <div><b>guard</b><span>Expresa una condición de seguridad o control.</span></div>
-      <div><b>run</b><span>Solicita la ejecución de un agente u objetivo.</span></div>
+    <div className="docs-grid docs-overview">
+      <section className="panel docs-card"><div className="icon-tile"><BookOpen size={19}/></div><div><h2>¿Dónde programo?</h2><p>En <b>Playground</b>. Es el IDE integrado: escribe .prax, recibe diagnóstico en tiempo real, inspecciona Tokens/AST/Graph y ejecuta contra el runtime local.</p></div></section>
+      <section className="panel docs-card"><div className="icon-tile"><TerminalSquare size={19}/></div><div><h2>Entorno</h2><p>Node.js ejecuta el runtime y Vite sirve la interfaz.</p><pre className="doc-terminal">{"npm install\nnpm run build\nnpm run preview"}</pre></div></section>
+      <section className="panel docs-card"><div className="icon-tile"><ShieldCheck size={19}/></div><div><h2>Principio central</h2><p>Un programa declara intención, capacidades, evidencia, permisos y controles antes de conectar servicios reales.</p></div></section>
+      <section className="panel docs-card"><div className="icon-tile"><Play size={19}/></div><div><h2>Flujo de trabajo</h2><ol><li>Escribe el programa.</li><li>Corrige Diagnóstico.</li><li>Inspecciona AST y Graph.</li><li>Ejecuta.</li><li>Analiza la traza y el resultado.</li></ol></div></section>
+    </div>
+    <section className="panel docs-section"><div className="section-kicker">01 · PRIMER PROGRAMA</div><h2>Sintaxis básica v0.3</h2><p className="section-lead">Variable, agente, herramienta, evidencia, guard y ejecución.</p><CodeBlock code={example} label="main.prax" /></section>
+    <section className="panel docs-section"><div className="section-kicker">02 · GRAMÁTICA</div><h2>Forma conceptual</h2><p className="section-lead">La gramática define la estructura; las propiedades determinan el comportamiento y las restricciones.</p><CodeBlock code={grammar} label="grammar.prax" /></section>
+    <section className="panel docs-section"><div className="section-kicker">03 · REFERENCIA</div><h2>Elementos del lenguaje</h2><div className="docs-reference">
+      <div><b>let</b><span>Define un valor reutilizable.</span><code>let objetivo = "investigar"</code></div>
+      <div><b>agent</b><span>Declara un agente con rol, objetivo, ciclo, memoria y política.</span><code>{"agent investigador { role: \"researcher\" }"}</code></div>
+      <div><b>tool</b><span>Declara una capacidad externa y su contrato de acceso.</span><code>{"tool buscador { permission: \"web.read\" }"}</code></div>
+      <div><b>memory</b><span>Representa memoria que puede asociarse a un agente o flujo.</span><code>{"memory contexto { mode: \"local\" }"}</code></div>
+      <div><b>evidence</b><span>Registra fuente, claims y nivel de confianza.</span><code>{"evidence fuente { confidence: 0.9 }"}</code></div>
+      <div><b>guard</b><span>Impone una condición o política antes de continuar.</span><code>{"guard validar { condition: objetivo }"}</code></div>
+      <div><b>parallel</b><span>Declara ramas independientes que pueden procesarse en paralelo.</span><code>{"parallel ramas { steps: [a, b] }"}</code></div>
+      <div><b>run</b><span>Solicita una ejecución y crea el nodo de ejecución.</span><code>run investigador</code></div>
     </div></section>
+    <section className="panel docs-section"><div className="section-kicker">04 · CONTRATOS</div><h2>Propiedades y permisos</h2><div className="contract-grid">
+      <article><Wrench/><h3>permission</h3><p>Define la capacidad que una herramienta puede ejercer. Ejemplos: <code>web.read</code>, <code>filesystem.read</code> o <code>data.query</code>. En v0.3 se registra y valida como contrato; no concede acceso real por sí solo.</p><div className="contract-example">permission: "web.read"</div></article>
+      <article><LockKeyhole/><h3>policy</h3><p>Expresa la política operacional de un agente. <code>read-only</code> comunica una operación limitada a lectura dentro del runtime autorizado.</p><div className="contract-example">policy: "read-only"</div></article>
+      <article><CircleAlert/><h3>limit</h3><p>Marca un límite cuantitativo de la capacidad declarada: llamadas, resultados, pasos o recursos, según el contrato.</p><div className="contract-example">limit: 5</div></article>
+      <article><Database/><h3>source · confidence</h3><p><code>source</code> identifica el origen de una evidencia y <code>confidence</code> expresa una confianza numérica entre 0 y 1.</p><div className="contract-example">source: "documento" · confidence: 0.9</div></article>
+      <article><GitBranch/><h3>requires</h3><p>Declara dependencias que deben existir o resolverse antes de utilizar un bloque. El validador detecta referencias no resueltas y ciclos.</p><div className="contract-example">requires: [buscador]</div></article>
+    </div></section>
+    <section className="panel docs-section docs-note"><div className="section-kicker">05 · ESTADO ACTUAL</div><h2>¿Qué significa que Run diga “planned”?</h2><p>En v0.3 el runtime analiza la declaración, resuelve referencias, construye el grafo y registra la traza. <b>planned</b> indica que la ejecución fue planificada; todavía no significa que una herramienta externa real haya sido invocada.</p></section>
   </div>;
 }

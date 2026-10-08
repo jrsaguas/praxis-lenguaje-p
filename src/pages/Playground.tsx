@@ -20,6 +20,10 @@ agent investigador {
   policy: "read-only"
 }
 tool buscador {
+  contract: "web.search"
+  input: "query: string"
+  required: "query"
+  output: "results: SearchResult[]"
   permission: "web.read"
   limit: 5
 }

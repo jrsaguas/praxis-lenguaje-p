@@ -1,7 +1,63 @@
-import{useState}from"react";const sample=`let objetivo = "analizar una hipótesis"
+import { useMemo, useState } from "react";
+import { Braces, Bug, Play, RotateCcw, Terminal, WandSparkles } from "lucide-react";
+import { parse } from "../language/parser";
+
+const sample = `let objetivo = "analizar una hipótesis"
 agent investigador {
   role: "researcher"
   goal: objetivo
   cycle: [observe, analyze, verify, report]
+  policy: "read-only"
 }
-run investigador`;export default function Playground(){const[code,setCode]=useState(sample),[out,setOut]=useState("Listo para ejecutar."),[busy,setBusy]=useState(false);async function run(){setBusy(true);try{const r=await fetch("http://localhost:8787/api/execute",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code})});setOut(JSON.stringify(await r.json(),null,2))}catch{setOut("Runtime no disponible. Ejecuta npm run dev:server.")}finally{setBusy(false)}}return <div className="space-y-5"><div><div className="eyebrow">IDE</div><h1 className="text-3xl font-bold">Playground</h1></div><div className="grid xl:grid-cols-2 gap-4"><div className="panel overflow-hidden"><div className="p-3 border-b border-blue-950"><span className="code text-xs">main.prax</span></div><textarea value={code} onChange={e=>setCode(e.target.value)} className="code w-full min-h-[520px] bg-[#030814] p-5 outline-none text-sm leading-6 text-blue-100"/></div><div className="panel overflow-hidden"><div className="p-3 border-b border-blue-950 flex justify-between"><span className="code text-xs">runtime.trace</span><button onClick={run} className="btn-primary">{busy?"Ejecutando…":"▶ Ejecutar"}</button></div><pre className="code whitespace-pre-wrap p-5 text-xs leading-5 text-slate-300 min-h-[520px]">{out}</pre></div></div></div>}
+run investigador`;
+
+export default function Playground() {
+  const [code, setCode] = useState(sample);
+  const [tab, setTab] = useState<"runtime" | "tokens" | "ast">("runtime");
+  const [out, setOut] = useState("Listo para ejecutar.");
+  const [busy, setBusy] = useState(false);
+  const analysis = useMemo(() => parse(code), [code]);
+
+  async function run() {
+    setBusy(true);
+    try {
+      const r = await fetch("http://localhost:8787/api/execute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+      setOut(JSON.stringify(await r.json(), null, 2));
+      setTab("runtime");
+    } catch {
+      setOut("Runtime no disponible. Ejecuta npm run dev:server.");
+    } finally { setBusy(false); }
+  }
+
+  function reset() { setCode(sample); setOut("Restablecido."); }
+
+  const view = tab === "tokens" ? analysis.tokens : tab === "ast" ? analysis.ast : out;
+
+  return <div className="space-y-5">
+    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      <div><div className="eyebrow">IDE · Praxis-P</div><h1 className="text-3xl font-bold">Playground</h1><p className="text-slate-400 mt-2">Escribe, analiza y ejecuta programas Praxis-P con diagnóstico visible.</p></div>
+      <div className="flex gap-2"><button className="btn-secondary" onClick={reset}><RotateCcw size={15}/> Restablecer</button><button className="btn-primary" onClick={run} disabled={busy}><Play size={15}/>{busy ? "Ejecutando…" : "Ejecutar"}</button></div>
+    </div>
+
+    <div className="grid xl:grid-cols-[1.15fr_.85fr] gap-4">
+      <div className="panel overflow-hidden">
+        <div className="p-3 border-b border-blue-950 flex items-center justify-between"><span className="code text-xs">main.prax</span><span className="badge"><WandSparkles size={11}/> {analysis.ast.statements.length} instrucciones</span></div>
+        <textarea spellCheck={false} value={code} onChange={e => setCode(e.target.value)} className="code w-full min-h-[560px] bg-[#030814] p-5 outline-none text-sm leading-6 text-blue-100 resize-y"/>
+      </div>
+      <div className="panel overflow-hidden">
+        <div className="p-2 border-b border-blue-950 flex gap-1">
+          {([["runtime","Runtime",Terminal],["tokens","Tokens",Braces],["ast","AST",Bug]] as const).map(([id,label,Icon]) =>
+            <button key={id} onClick={() => setTab(id)} className={`tab-btn ${tab === id ? "tab-active" : ""}`}><Icon size={14}/>{label}</button>
+          )}
+        </div>
+        <pre className="code whitespace-pre-wrap p-5 text-xs leading-5 text-slate-300 min-h-[560px] overflow-auto">{JSON.stringify(view, null, 2)}</pre>
+      </div>
+    </div>
+
+    <div className={`panel p-4 ${analysis.diagnostics.length ? "border-red-900/80" : ""}`}>
+      <div className="flex items-center gap-2 text-sm font-semibold"><Bug size={15}/> Diagnóstico <span className="badge">{analysis.diagnostics.length} errores</span></div>
+      {analysis.diagnostics.length === 0 ? <p className="text-xs text-emerald-400 mt-2">Sintaxis estructural válida para el parser v0.2.</p> :
+        <div className="mt-3 space-y-1">{analysis.diagnostics.map((d, i) => <div key={i} className="text-xs text-red-300 code">L{d.line}:C{d.column} · {d.message}</div>)}</div>}
+    </div>
+  </div>;
+}

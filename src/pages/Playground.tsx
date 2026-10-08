@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Braces, Bug, Play, RotateCcw, Terminal, WandSparkles } from "lucide-react";
+import { Braces, Bug, GitBranch, Play, RotateCcw, Terminal, WandSparkles } from "lucide-react";
 import { parse } from "../language/parser";
 
 const sample = `let objetivo = "analizar una hipótesis"
@@ -9,11 +9,22 @@ agent investigador {
   cycle: [observe, analyze, verify, report]
   policy: "read-only"
 }
+tool buscador {
+  permission: "web.read"
+  limit: 5
+}
+evidence fuente {
+  source: "documento"
+  confidence: 0.9
+}
+guard validar {
+  condition: objetivo
+}
 run investigador`;
 
 export default function Playground() {
   const [code, setCode] = useState(sample);
-  const [tab, setTab] = useState<"runtime" | "tokens" | "ast">("runtime");
+  const [tab, setTab] = useState<"runtime" | "tokens" | "ast" | "graph">("runtime");
   const [out, setOut] = useState("Listo para ejecutar.");
   const [busy, setBusy] = useState(false);
   const analysis = useMemo(() => parse(code), [code]);
@@ -31,7 +42,7 @@ export default function Playground() {
 
   function reset() { setCode(sample); setOut("Restablecido."); }
 
-  const view = tab === "tokens" ? analysis.tokens : tab === "ast" ? analysis.ast : out;
+  const view = tab === "tokens" ? analysis.tokens : tab === "ast" ? analysis.ast : tab === "graph" ? { nodes: analysis.ast.statements.filter(s => "name" in s).map(s => ({ id: s.name, kind: s.type })), edges: analysis.ast.statements.filter(s => s.type === "Run").map(s => ({ from: "run:" + s.line, to: s.target, relation: "targets" })) } : out;
 
   return <div className="space-y-5">
     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
@@ -46,7 +57,7 @@ export default function Playground() {
       </div>
       <div className="panel overflow-hidden">
         <div className="p-2 border-b border-blue-950 flex gap-1">
-          {([["runtime","Runtime",Terminal],["tokens","Tokens",Braces],["ast","AST",Bug]] as const).map(([id,label,Icon]) =>
+          {([["runtime","Runtime",Terminal],["tokens","Tokens",Braces],["ast","AST",Bug],["graph","Graph",GitBranch]] as const).map(([id,label,Icon]) =>
             <button key={id} onClick={() => setTab(id)} className={`tab-btn ${tab === id ? "tab-active" : ""}`}><Icon size={14}/>{label}</button>
           )}
         </div>
@@ -56,7 +67,7 @@ export default function Playground() {
 
     <div className={`panel p-4 ${analysis.diagnostics.length ? "border-red-900/80" : ""}`}>
       <div className="flex items-center gap-2 text-sm font-semibold"><Bug size={15}/> Diagnóstico <span className="badge">{analysis.diagnostics.length} errores</span></div>
-      {analysis.diagnostics.length === 0 ? <p className="text-xs text-emerald-400 mt-2">Sintaxis estructural válida para el parser v0.2.</p> :
+      {analysis.diagnostics.length === 0 ? <p className="text-xs text-emerald-400 mt-2">Sintaxis estructural válida para el parser v0.3.</p> :
         <div className="mt-3 space-y-1">{analysis.diagnostics.map((d, i) => <div key={i} className="text-xs text-red-300 code">L{d.line}:C{d.column} · {d.message}</div>)}</div>}
     </div>
   </div>;

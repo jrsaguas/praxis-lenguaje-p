@@ -33,3 +33,19 @@ button,input,textarea{font:inherit}button{cursor:pointer}
 @media(max-width:1100px){.feature-grid{grid-template-columns:repeat(2,1fr)}.tool-grid{grid-template-columns:repeat(2,1fr)}.compiler-grid{grid-template-columns:repeat(3,1fr)}.hero-panel{grid-template-columns:1fr}.home-principles,.split-panel{grid-template-columns:1fr}}
 @media(max-width:767px){.hero-panel{padding:20px}.hero-panel h1{font-size:30px}.hero-actions{flex-direction:column}.home-statbar{grid-template-columns:repeat(2,1fr)}.home-statbar>div{border-bottom:1px solid #292722}.feature-grid,.tool-grid,.settings-grid,.compiler-grid{grid-template-columns:1fr}.flow-canvas{overflow-x:auto}.flow-track{justify-content:flex-start;padding:40px 5px}.flow-legend{min-width:600px}.home-principles{padding:17px}}
 
+
+/* Functional registry forms and runtime diagnostics */
+.field-input{display:block;width:100%;min-width:0;margin-top:7px;padding:10px 12px;border:1px solid #39352d;border-radius:8px;background:#080807;color:#e8e1d6;font-size:12px;line-height:1.6;outline:none}
+.field-input:focus{border-color:#b88743;box-shadow:0 0 0 2px #b8874322}
+.field-input::placeholder{color:#655f56}
+textarea.field-input{min-height:84px;resize:vertical}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+.form-grid label{display:block;color:#a7a095;font-size:11px;min-width:0}
+.modal-backdrop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:18px;background:#000c;backdrop-filter:blur(8px)}
+.editor-modal{width:min(760px,100%);max-height:90vh;overflow:auto;padding:22px}
+.editor-modal h2{margin:0;color:#f0e9dd;font-size:18px}
+.code-input-flow{min-height:220px;font-family:"JetBrains Mono","Cascadia Code",Consolas,monospace;white-space:pre;overflow:auto;overflow-wrap:normal}
+.diagnostic-banner{margin-top:14px;padding:11px;border:1px solid #733b30;border-radius:8px;background:#26100d;color:#f0a18c;font-size:11px;overflow-wrap:anywhere}
+.flow-node{flex-direction:column;align-items:flex-start;min-width:110px}.flow-node small{color:#8b8377;font-size:9px}
+.status-bad{color:#f08e7c!important;overflow-wrap:anywhere}
+@media(max-width:767px){.form-grid{grid-template-columns:1fr}.editor-modal{padding:15px}.modal-backdrop{padding:9px}.code-input-flow{font-size:11px;min-height:200px}.flow-node{min-width:100px}}

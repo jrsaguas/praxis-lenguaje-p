@@ -61,3 +61,11 @@ textarea.field-input{min-height:84px;resize:vertical}
 .trace-list{border-top:1px solid #292722}.trace-event{border-bottom:1px solid #24221e}.trace-event:last-child{border-bottom:0}
 .trace-event>summary{display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer;list-style:none;min-width:0}.trace-event>summary:hover{background:#151411}.trace-event>summary code{color:#d4a45b;font:11px "JetBrains Mono",monospace;overflow-wrap:anywhere}.trace-index{color:#625b50;font:10px "JetBrains Mono",monospace}.trace-status{margin-left:auto;color:#86c994;font:10px "JetBrains Mono",monospace}.trace-simulated{color:#d8b56f}.trace-detail{margin:0;padding:12px 18px 16px 42px;background:#070706;color:#a9a298;font:10px/1.65 "JetBrains Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere}.trace-empty{padding:14px 16px;margin:0;color:#817a70;font-size:11px}
 @media(max-width:767px){.trace-summary{align-items:flex-start;flex-direction:column}.trace-event>summary{gap:8px;padding:10px}.trace-event>summary code{font-size:10px}.trace-detail{padding:10px;font-size:9px}}
+
+/* Grammar notation reference */
+.grammar-key{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+.grammar-key>div{display:flex;align-items:flex-start;gap:12px;padding:12px;border:1px solid #292722;border-radius:8px;background:#0b0b0a;min-width:0}
+.grammar-key>div>code{flex:0 0 56px;color:#d4a45b;font:700 13px "JetBrains Mono",monospace}
+.grammar-key span{color:#999187;font-size:11px;line-height:1.6}.grammar-key span code,.grammar-note code{color:#d4a45b;font-family:"JetBrains Mono",monospace}
+.grammar-note{margin:12px 0 0;padding:12px 14px;border-left:2px solid #b88743;background:#15120d;color:#b7afa3;font-size:11px;line-height:1.7}
+@media(max-width:767px){.grammar-key{grid-template-columns:1fr}}

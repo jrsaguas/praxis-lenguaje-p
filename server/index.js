@@ -83,4 +83,5 @@ app.post("/api/analyze", (req, res) => {
     res.json({ ok: true, language: "Praxis-P", version: "0.2.0", ...result });
   } catch (error) { res.status(400).json({ ok: false, error: String(error) }); }
 });
-const PORT = Number(process.env.PORT || 8788);\napp.listen(PORT, () => console.log(`Praxis-P runtime listening on http://localhost:${PORT}`));
+const PORT = Number(process.env.PORT || 8788);
+app.listen(PORT, () => console.log(`Praxis-P runtime listening on http://localhost:${PORT}`));

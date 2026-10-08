@@ -1,6 +1,16 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Braces, Bug, GitBranch, Play, RotateCcw, Terminal, WandSparkles } from "lucide-react";
 import { parse } from "../language/parser";
+
+function highlight(source: string) {
+  const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c] ?? c));
+  let html = esc(source);
+  html = html.replace(/(\/\/.*)$/gm, '<span class="tok-comment">$1</span>');
+  html = html.replace(/(&quot;.*?&quot;)/g, '<span class="tok-string">$1</span>');
+  html = html.replace(/\b(agent|tool|memory|evidence|guard|parallel|run|let|role|goal|cycle|policy|permission|limit|source|confidence|condition|input|output|requires|test|claim|on|allow|deny|steps|mode)\b/g, '<span class="tok-keyword">$1</span>');
+  html = html.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-number">$1</span>');
+  return html;
+}
 
 const sample = `let objetivo = "analizar una hipótesis"
 agent investigador {
@@ -28,11 +38,17 @@ export default function Playground() {
   const [out, setOut] = useState("Listo para ejecutar.");
   const [busy, setBusy] = useState(false);
   const analysis = useMemo(() => parse(code), [code]);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const syncScroll = () => {
+    const el = editorRef.current;
+    const mirror = el?.previousElementSibling as HTMLElement | null;
+    if (el && mirror) { mirror.scrollTop = el.scrollTop; mirror.scrollLeft = el.scrollLeft; }
+  };
 
   async function run() {
     setBusy(true);
     try {
-      const r = await fetch("http://localhost:8788/api/execute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+      const r = await fetch("http://" + window["location"]["hostname"] + ":8788/api/execute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
       setOut(JSON.stringify(await r.json(), null, 2));
       setTab("runtime");
     } catch {
@@ -53,7 +69,10 @@ export default function Playground() {
     <div className="grid xl:grid-cols-[1.15fr_.85fr] gap-4">
       <div className="panel overflow-hidden">
         <div className="p-3 border-b border-blue-950 flex items-center justify-between"><span className="code text-xs">main.prax</span><span className="badge"><WandSparkles size={11}/> {analysis.ast.statements.length} instrucciones</span></div>
-        <textarea spellCheck={false} value={code} onChange={e => setCode(e.target.value)} className="code w-full min-h-[560px] bg-[#030814] p-5 outline-none text-sm leading-6 text-blue-100 resize-y"/>
+        <div className="code-editor">
+          <pre className="syntax-layer" aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlight(code) + "\n" }} />
+          <textarea ref={editorRef} spellCheck={false} value={code} onChange={e => setCode(e.target.value)} onScroll={syncScroll} className="code-input" aria-label="Editor de código Praxis-P" />
+        </div>
       </div>
       <div className="panel overflow-hidden">
         <div className="p-2 border-b border-blue-950 flex gap-1">

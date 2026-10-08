@@ -15,6 +15,7 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
   const diagnostics: ParseDiagnostic[] = [];
   const statements: Statement[] = [];
   let i = 0;
+
   const blockTypes: Record<string, BlockType> = {
     agent: "Agent", tool: "Tool", memory: "Memory", evidence: "Evidence", guard: "Guard", parallel: "Parallel"
   };
@@ -29,6 +30,7 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
     diag(`Se esperaba "${value}" y se encontró "${current()?.value || "fin"}"`);
     return false;
   };
+
   const readValue = (): Value => {
     const t = current();
     if (!t) return null;
@@ -75,6 +77,7 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
       if (blockType !== "Parallel" && current()?.kind !== "identifier") diag(`Se esperaba el nombre para ${t.value}`);
       if (current()?.kind === "identifier") i++;
       expect("{");
+
       const properties: Property[] = [];
       while (current() && current().value !== "}" && current().kind !== "eof") {
         skip();
@@ -82,6 +85,8 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
         const keyToken = current();
         const key = keyToken?.value ?? "";
         i++;
+        // Praxis-P acepta ambas formas: key: value y key value.
+        if (current()?.value === ":") i++;
         const value = readValue();
         properties.push({ key, value, line: keyToken?.line ?? t.line, column: keyToken?.column ?? t.column });
         skip();

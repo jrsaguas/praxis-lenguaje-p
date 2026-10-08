@@ -57,10 +57,18 @@ function execute(code) {
   const graph = buildGraph(program);
   const names = new Set(program.blocks.map(b => b.name));
   const duplicateNames = program.blocks.map(b => b.name).filter((name, idx, all) => all.indexOf(name) !== idx);
+  const cycleNodes = new Set();
+  const requires = new Map(program.blocks.map(b => [b.name, (Array.isArray(b.properties.requires) ? b.properties.requires : b.properties.requires ? [b.properties.requires] : []).map(x => typeof x === "object" && x.ref ? x.ref : String(x))]));
+  function visit(name, stack = []) {
+    if (stack.includes(name)) { stack.slice(stack.indexOf(name)).forEach(x => cycleNodes.add(x)); return; }
+    for (const target of requires.get(name) || []) if (names.has(target)) visit(target, [...stack, name]);
+  }
+  for (const name of names) visit(name);
   const errors = [
     ...graph.edges.filter(e => e.relation === "requires" && !names.has(e.to)).map(e => "Dependencia no resuelta: " + e.from + " requiere " + e.to),
     ...program.trace.filter(e => e.type === "run" && !names.has(e.agent)).map(e => "Objetivo no resuelto: " + e.agent),
-    ...duplicateNames.map(name => "Nombre duplicado: " + name)
+    ...duplicateNames.map(name => "Nombre duplicado: " + name),
+    ...(cycleNodes.size ? ["Ciclo de dependencias detectado: " + [...cycleNodes].join(" -> ")] : [])
   ];
   return { ok: errors.length === 0, language: "Praxis-P", version: "0.3.0", program: { lines: code.split(/\r?\n/).length, variables: program.variables, blocks: program.blocks }, trace: program.trace, graph, validation: { errors, resolved: errors.length === 0, counts: { blocks: program.blocks.length, edges: graph.edges.length } } };
 }

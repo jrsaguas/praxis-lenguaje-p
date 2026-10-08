@@ -85,7 +85,7 @@ export default function Playground() {
             <button key={id} onClick={() => setTab(id)} className={`tab-btn ${tab === id ? "tab-active" : ""}`}><Icon size={14}/>{label}</button>
           )}
         </div>
-        <pre className="output-code">{JSON.stringify(view, null, 2)}</pre>
+        <pre className="output-code">{tab === "runtime" ? out : JSON.stringify(view, null, 2)}</pre>
       </div>
     </div>
 

@@ -21,7 +21,7 @@ export default function Playground() {
   async function run() {
     setBusy(true);
     try {
-      const r = await fetch("http://localhost:8787/api/execute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+      const r = await fetch("http://localhost:8788/api/execute", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
       setOut(JSON.stringify(await r.json(), null, 2));
       setTab("runtime");
     } catch {

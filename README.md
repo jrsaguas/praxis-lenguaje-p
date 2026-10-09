@@ -1,44 +1,52 @@
 # Praxis-P
 
-Primer lenguaje especializado para Praxis Agent.
+Lenguaje especializado para describir agentes, herramientas, contratos, memoria, evidencia y flujos. La gramática y el parser compartidos son la autoridad única para la interfaz y el runtime.
 
 ## Stack
 - React + Vite + TypeScript
-- Tailwind CSS
-- React Router
-- Lucide React (dependencia disponible para la evolución de la UI)
+- Tailwind CSS + React Router + Lucide React
 - Node.js + Express + CORS
-- npm
+- Núcleo compartido de lenguaje en `shared/praxis-core.mjs` (parser, tokens, AST y conversión al formato del runtime)
 
-## Ejecutar
+## Arranque de desarrollo
+Usa dos terminales en la carpeta del proyecto. No es necesario iniciar servidores adicionales.
 
-Terminal 1:
+Terminal 1 — interfaz:
+```powershell
 npm run dev
+```
+La interfaz usa `http://localhost:5173`. Vite escucha en la red local para permitir pruebas desde otro dispositivo. Si el puerto ya está ocupado, identifica el proceso antes de detenerlo; no mates servidores de otros proyectos.
 
-Terminal 2:
+Terminal 2 — API y runtime:
+```powershell
 npm run dev:server
+```
+La API usa `http://localhost:8788`. El puerto `8787` puede pertenecer a otros proyectos y no forma parte del arranque de Praxis-P.
 
-UI: http://localhost:5173  
-Runtime: http://localhost:8787/api/health
+## Vista previa de producción
+```powershell
+npm run build
+npm run preview -- --host 0.0.0.0 --port 5180 --strictPort
+```
+La vista previa usa `http://localhost:5180`. No ejecutes `dev` y `preview` como si fueran el mismo servidor: `dev` sirve el código fuente con recarga en caliente y `preview` sirve el resultado compilado.
 
-## Páginas
-Inicio · Playground · Lenguaje P · Agentes · Herramientas · Flujos · Compilador/AST · Documentación · Configuración
+## Endpoints
+- `GET /api/health` — estado del runtime y versión de especificación.
+- `POST /api/analyze` — tokens, AST y diagnósticos del parser compartido.
+- `POST /api/execute` — validación, grafo y traza de ejecución simulada.
+- `GET /api/tools` — contratos registrados.
+- `PUT /api/tools` — reemplazo validado del registro local de contratos.
 
-## Núcleo del lenguaje
-Praxis-P está diseñado como lenguaje especializado para sistemas agentivos: agentes, herramientas, contratos, memoria, ciclos, evidencia, permisos y orquestación.
+## Especificación
+- Versión actual: `0.4.0`.
+- Parser compartido: `shared/praxis-core.mjs`.
+- La interfaz importa ese parser; el servidor usa el mismo módulo para analizar y ejecutar. Así tokens, AST y diagnósticos se generan desde una sola implementación.
+- El runtime actual valida el programa y simula los ciclos de agentes. No invoca proveedores de IA ni herramientas externas.
+- Los adaptadores de modelos deben ser independientes de la sintaxis del lenguaje y añadirse después de consolidar el runtime y los contratos.
 
-## Estado v0.1
-- Interfaz multipágina funcional.
-- Playground conectado al runtime local.
-- Endpoint de salud y ejecución.
-- Gramática conceptual inicial.
-- AST conceptual y roadmap del compilador.
-- Repositorio Git + GitHub.
-
-## Próximo núcleo técnico
-1. Lexer real.
-2. Parser real y AST tipado.
-3. Diagnósticos de sintaxis.
-4. Runtime con tool registry.
-5. Memoria y evidencia persistentes.
-6. Adaptadores para proveedores de modelos.
+## Verificación
+```powershell
+npm run test:core
+npm run lint
+npm run build
+```

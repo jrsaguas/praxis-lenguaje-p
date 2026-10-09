@@ -65,7 +65,7 @@ export default function Compiler() {
         </div>
       </label>
       <div className="validation-list">
-        <div><span>Versión del AST</span><b>0.3.0</b></div>
+        <div><span>Versión del AST</span><b>0.4.0</b></div>
         <div><span>Instrucciones</span><b>{analysis.ast.statements.length}</b></div>
         <div><span>Diagnósticos</span><b className={analysis.diagnostics.length ? "status-bad" : "status-good"}>{analysis.diagnostics.length}</b></div>
       </div>

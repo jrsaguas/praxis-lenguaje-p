@@ -3,6 +3,7 @@ import { Braces, Bug, CheckCircle2, GitBranch, Play, RotateCcw, Terminal, WandSp
 import { parse } from "../language/parser";
 import GraphCanvas from "../components/GraphCanvas";
 import { highlightPraxis } from "../language/syntaxHighlight";
+import { highlightJsonSyntax } from "../language/jsonHighlight";
 
 type Tab = "result" | "tokens" | "ast" | "graph" | "json";
 type RuntimeResult = {
@@ -155,7 +156,7 @@ export default function Playground() {
             </> : <pre className="output-code">{out || "Sin salida."}</pre>}
         </div>}
 
-        {tab === "tokens" && <div className="inspector-content"><div className="inspector-caption">Tokens producidos por el analizador léxico</div><pre className="output-code json-output">{JSON.stringify(analysis.tokens, null, 2)}</pre></div>}
+        {tab === "tokens" && <div className="inspector-content"><div className="inspector-caption">Tokens producidos por el analizador léxico · palabras, símbolos, posiciones y tipo</div><pre className="output-code json-output" dangerouslySetInnerHTML={{ __html: highlightJsonSyntax(JSON.stringify(analysis.tokens, null, 2)) }}/></div>}
         {tab === "ast" && <div className="inspector-content"><div className="inspector-caption">Árbol de sintaxis abstracta · AST</div><pre className="output-code json-output" dangerouslySetInnerHTML={{ __html: highlightJson(JSON.stringify(analysis.ast, null, 2)) }}/></div>}
         {tab === "graph" && <div className="inspector-content">
           <div className="inspector-caption">Mapa interactivo de agentes, herramientas, recursos y dependencias. Pulsa un nodo para consultar sus conexiones.</div>

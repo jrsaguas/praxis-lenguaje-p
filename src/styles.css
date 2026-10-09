@@ -168,6 +168,15 @@ textarea.field-input{min-height:84px;resize:vertical}
 .runtime-sync-pill.loading{border-color:#403728;background:#15120d;color:#d8bc8d}
 .runtime-sync-pill.offline{border-color:#4b302e;background:#1a100f;color:#e4a6a0}
 
+/* Documentation color legend and structured JSON/token inspectors. */
+.syntax-color-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:15px}
+.syntax-color-legend>div{display:grid;grid-template-columns:10px minmax(0,auto) 1fr;align-items:center;gap:9px;padding:11px 12px;border:1px solid #292722;border-radius:8px;background:#0b0b0a;min-width:0}
+.syntax-color-legend code{font:10px "JetBrains Mono",monospace;color:#ddd5c9;overflow-wrap:anywhere}
+.syntax-color-legend span{font-size:10px;color:#8f877b;line-height:1.5}
+.legend-swatch{display:block;width:9px;height:9px;border-radius:50%}
+.swatch-keyword{background:#e4ad5b}.swatch-string{background:#8bd49a}.swatch-identifier{background:#7dd3fc}.swatch-number{background:#c4b5fd}.swatch-symbol{background:#b9b0a3}.swatch-comment{background:#7b827b}.swatch-json{background:#e3a079}
+.json-key{color:#e4ad5b}.json-string{color:#8bd49a}.json-number{color:#c4b5fd}.json-literal{color:#e3a079}.json-punctuation{color:#b9b0a3}
+@media(max-width:767px){.syntax-color-legend{grid-template-columns:1fr}.syntax-color-legend>div{grid-template-columns:10px minmax(0,auto) 1fr}}
 /* Syntax highlighting: distinguish grammar notation and every code token. */
 .tok-identifier{color:#7dd3fc}
 .tok-function{color:#c4b5fd}

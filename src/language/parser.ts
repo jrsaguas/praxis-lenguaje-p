@@ -7,7 +7,7 @@ export type Statement =
   | { type: "Let"; name: string; value: Value; line: number }
   | { type: BlockType; name: string; properties: Property[]; line: number }
   | { type: "Run"; target: string; args?: Value; line: number };
-export type Program = { type: "Program"; version: "0.3.0"; statements: Statement[] };
+export type Program = { type: "Program"; version: "0.4.0"; statements: Statement[] };
 export type ParseDiagnostic = { message: string; line: number; column: number; severity: "error" | "warning" };
 
 export function parse(source: string): { ast: Program; diagnostics: ParseDiagnostic[]; tokens: Token[] } {
@@ -17,7 +17,7 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
   let i = 0;
 
   const blockTypes: Record<string, BlockType> = {
-    agent: "Agent", tool: "Tool", memory: "Memory", evidence: "Evidence", guard: "Guard", parallel: "Parallel"
+    agent: "Agent", tool: "Tool", memory: "Memory", evidence: "Evidence", guard: "Guard", parallel: "Parallel",
   };
   const current = () => tokens[i];
   const skip = () => { while (current()?.kind === "newline") i++; };
@@ -32,24 +32,87 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
   };
 
   const readValue = (): Value => {
+    skip();
     const t = current();
-    if (!t) return null;
+    if (!t || t.kind === "eof") return null;
     if (t.kind === "string") { i++; return t.value; }
     if (t.kind === "number") { i++; return Number(t.value); }
     if (t.value === "true" || t.value === "false") { i++; return t.value === "true"; }
+
     if (t.value === "[") {
       i++;
       const values: Value[] = [];
       skip();
       while (current() && current().value !== "]" && current().kind !== "eof") {
+        const before = i;
         values.push(readValue());
         skip();
-        if (current()?.value === ",") { i++; skip(); } else break;
+        if (current()?.value === ",") { i++; skip(); }
+        else if (current()?.value !== "]") {
+          diag('Se esperaba "," o "]" en la lista');
+          if (i === before) i++;
+          break;
+        }
       }
       expect("]");
       return values;
     }
-    if (t.kind === "identifier" || t.kind === "keyword") { i++; return { ref: t.value }; }
+
+    if (t.value === "{") {
+      i++;
+      const value: Record<string, Value> = {};
+      skip();
+      while (current() && current().value !== "}" && current().kind !== "eof") {
+        const before = i;
+        const keyToken = current();
+        if (keyToken.kind !== "identifier" && keyToken.kind !== "keyword" && keyToken.kind !== "string") {
+          diag("Se esperaba el nombre de una propiedad en el objeto");
+          i++;
+          skip();
+          continue;
+        }
+        const key = keyToken.value;
+        i++;
+        if (current()?.value === ":") i++;
+        else diag('Se esperaba ":" después de la propiedad', current());
+        value[key] = readValue();
+        skip();
+        if (current()?.value === ",") { i++; skip(); }
+        else if (current()?.value !== "}") {
+          // Newlines may separate object properties; commas are optional between lines.
+          if (current()?.line === keyToken.line) {
+            diag('Se esperaba "," o "}" después del valor');
+            if (i === before) i++;
+          }
+        }
+      }
+      expect("}");
+      return value;
+    }
+
+    if (t.kind === "identifier" || t.kind === "keyword") {
+      i++;
+      if (current()?.value === "(") {
+        i++;
+        const args: Value[] = [];
+        skip();
+        while (current() && current().value !== ")" && current().kind !== "eof") {
+          const before = i;
+          args.push(readValue());
+          skip();
+          if (current()?.value === ",") { i++; skip(); }
+          else if (current()?.value !== ")") {
+            diag('Se esperaba "," o ")" en los argumentos');
+            if (i === before) i++;
+            break;
+          }
+        }
+        expect(")");
+        return { call: t.value, args };
+      }
+      return { ref: t.value };
+    }
+
     diag(`Valor no válido: ${t.value}`);
     i++;
     return null;
@@ -64,7 +127,7 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
       i++;
       const name = current()?.value ?? "";
       if (current()?.kind !== "identifier") diag("Se esperaba un identificador después de let");
-      i++;
+      if (current()?.kind !== "eof") i++;
       expect("=");
       statements.push({ type: "Let", name, value: readValue(), line: t.line });
       continue;
@@ -84,11 +147,12 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
         if (current()?.value === "}") break;
         const keyToken = current();
         const key = keyToken?.value ?? "";
+        if (!keyToken || keyToken.kind === "eof") break;
         i++;
-        // Praxis-P acepta ambas formas: key: value y key value.
         if (current()?.value === ":") i++;
+        else diag('Se esperaba ":" después del nombre de propiedad', current());
         const value = readValue();
-        properties.push({ key, value, line: keyToken?.line ?? t.line, column: keyToken?.column ?? t.column });
+        properties.push({ key, value, line: keyToken.line, column: keyToken.column });
         skip();
       }
       expect("}");
@@ -98,9 +162,10 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
 
     if (t.value === "run") {
       i++;
-      const target = current()?.value ?? "";
+      const targetToken = current();
+      const target = targetToken?.value ?? "";
       if (!target) diag("Se esperaba el objetivo de run");
-      i++;
+      if (targetToken?.kind !== "eof") i++;
       let args: Value | undefined;
       if (current()?.value === "with") { i++; args = readValue(); }
       statements.push({ type: "Run", target, ...(args === undefined ? {} : { args }), line: t.line });
@@ -112,15 +177,17 @@ export function parse(source: string): { ast: Program; diagnostics: ParseDiagnos
   }
 
   const names = new Map<string, Statement>();
-  for (const s of statements) {
-    if ("name" in s) {
-      if (names.has(s.name)) diagnostics.push({ message: `Nombre duplicado: ${s.name}`, line: s.line, column: 1, severity: "error" });
-      names.set(s.name, s);
+  for (const statement of statements) {
+    if ("name" in statement) {
+      if (names.has(statement.name)) diagnostics.push({ message: `Nombre duplicado: ${statement.name}`, line: statement.line, column: 1, severity: "error" });
+      names.set(statement.name, statement);
     }
   }
-  for (const s of statements) {
-    if (s.type === "Run" && !names.has(s.target)) diagnostics.push({ message: `Objetivo no resuelto: ${s.target}`, line: s.line, column: 1, severity: "error" });
+  for (const statement of statements) {
+    if (statement.type === "Run" && !names.has(statement.target)) {
+      diagnostics.push({ message: `Objetivo no resuelto: ${statement.target}`, line: statement.line, column: 1, severity: "error" });
+    }
   }
 
-  return { ast: { type: "Program", version: "0.3.0", statements }, diagnostics, tokens };
+  return { ast: { type: "Program", version: "0.4.0", statements }, diagnostics, tokens };
 }

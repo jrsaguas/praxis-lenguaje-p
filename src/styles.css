@@ -144,3 +144,26 @@ textarea.field-input{min-height:84px;resize:vertical}
 .graph-neighbor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.graph-neighbor-grid>div{min-width:0}.graph-neighbor-grid h4{margin:0 0 8px;color:#9b9182;font-size:9px;text-transform:uppercase;letter-spacing:.7px}.graph-neighbor-grid p{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:7px 0;margin:0;border-top:1px solid #28231c;font-size:9px}.graph-neighbor-grid code,.graph-target code{color:#d4a45b;font:10px "JetBrains Mono",monospace;overflow-wrap:anywhere}.graph-neighbor-grid p span{color:#7d7569}.graph-neighbor-grid small{color:#6e675c;font-size:9px}
 .graph-target{display:flex;align-items:center;gap:5px;color:#938879;font-size:10px}.graph-integrity-note{margin:0;padding:10px 14px;border-top:1px solid #292722;color:#81796e;font-size:9px;line-height:1.6}
 @media(max-width:767px){.graph-canvas-toolbar{align-items:flex-start;flex-direction:column}.graph-hint{font-size:9px}.graph-svg{min-width:760px}.graph-legend{gap:11px}.graph-neighbor-grid{grid-template-columns:1fr}.graph-node-details{margin-left:9px;margin-right:9px;padding:11px}}
+
+
+/* Home: explicit separation for the syntax principles and the code example. */
+.home-value-pills{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:22px}
+.home-value-pills span{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid #393126;border-radius:999px;background:#12100d;color:#c9bca8;font-size:11px;line-height:1.4;white-space:normal}
+.home-value-pills svg{flex:0 0 auto;color:#d4a45b}
+.syntax-home{white-space:pre-wrap;overflow-wrap:anywhere}
+.syntax-home code{display:block}
+.home-code-line{display:block;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9}
+.home-code-gap{display:block;height:12px}
+.hero-code-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid #292722;background:#0a0908}
+.hero-code-meta{display:inline-flex;align-items:center;gap:7px;min-width:0;padding:7px 9px;border:1px solid #2c2924;border-radius:7px;background:#11100e;color:#bdb4a6;font-size:10px;line-height:1.4}
+.hero-code-meta svg{flex:0 0 auto;color:#d4a45b}
+.hero-code-meta b{font-weight:600}
+.graph-canvas-wrap{min-width:0}
+@media(max-width:767px){.home-value-pills{gap:7px;margin-top:16px}.home-value-pills span{font-size:10px}.hero-code-foot{align-items:stretch}.hero-code-meta{flex:1 1 auto;justify-content:center}.home-code-line{font-size:10px}}
+
+
+/* Runtime status is a compact, legible state badge rather than inline text. */
+.runtime-sync-pill{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:6px 10px;border:1px solid #344236;border-radius:999px;background:#101710;color:#a9d8b0;font-size:10px;line-height:1.4;white-space:nowrap}
+.runtime-sync-pill svg{flex:0 0 auto}
+.runtime-sync-pill.loading{border-color:#403728;background:#15120d;color:#d8bc8d}
+.runtime-sync-pill.offline{border-color:#4b302e;background:#1a100f;color:#e4a6a0}

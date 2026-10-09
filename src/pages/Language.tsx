@@ -10,26 +10,37 @@ const items = [
 ];
 
 const grammar = [
-  "program := statement*",
+  "program   := statement*",
   "statement := let | agent | tool | memory | evidence | guard | parallel | run",
-  'agent := "agent" IDENT "{" property* "}"',
-  'run := "run" IDENT ("with" object)?',
-  'cycle := "[" IDENT ("," IDENT)* "]"',
-  'object := "{" pair* "}"'
-].join("\\n");
+  'let       := "let" IDENT "=" value',
+  'agent     := "agent" IDENT "{" property* "}"',
+  'tool      := "tool" IDENT "{" property* "}"',
+  'memory    := "memory" IDENT "{" property* "}"',
+  'evidence  := "evidence" IDENT "{" property* "}"',
+  'guard     := "guard" IDENT "{" property* "}"',
+  'parallel  := "parallel" IDENT? "{" property* "}"',
+  'run       := "run" IDENT ("with" object)?',
+  'property  := (IDENT | KEYWORD) ":" value',
+  'value     := STRING | NUMBER | BOOLEAN | IDENT | call | array | object',
+  'call      := IDENT "(" [value ("," value)*] ")"',
+  'array     := "[" [value ("," value)*] "]"',
+  'object    := "{" [pair (("," | NEWLINE) pair)*] "}"',
+  'pair      := (IDENT | KEYWORD) ":" value'
+].join("\n");
 
 function highlight(source: string) {
   const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c] ?? c));
+  const strings: string[] = [];
   let html = esc(source);
-  html = html.replace(/(&quot;.*?&quot;)/g, '<span class="tok-string">$1</span>');
-  html = html.replace(/\b(program|statement|agent|tool|memory|evidence|guard|parallel|run|let|cycle|object|property|IDENT)\b/g, '<span class="tok-keyword">$1</span>');
-  return html;
+  html = html.replace(/(&quot;.*?&quot;)/g, match => `__STRING_${strings.push(match) - 1}__`);
+  html = html.replace(/\b(program|statement|agent|tool|memory|evidence|guard|parallel|run|let|cycle|object|property|IDENT|KEYWORD|NEWLINE)\b/g, '<span class="tok-keyword">$1</span>');
+  return html.replace(/__STRING_(\d+)__/g, (_, index: string) => `<span class="tok-string">${strings[Number(index)]}</span>`);
 }
 
 export default function Language() {
   return <div className="page-stack language-page">
-    <div className="page-heading docs-hero"><div><div className="eyebrow">ESPECIFICACIÓN · V0.3</div><h1>Lenguaje Praxis-P</h1><p>Gramática y bloques fundamentales para construir sistemas agentivos trazables.</p></div><a className="btn-primary" href="/playground">▶ Probar sintaxis</a></div>
+    <div className="page-heading docs-hero"><div><div className="eyebrow">ESPECIFICACIÓN · V0.4</div><h1>Lenguaje Praxis-P</h1><p>Gramática y bloques fundamentales para construir sistemas agentivos trazables.</p></div><a className="btn-primary" href="/playground">▶ Probar sintaxis</a></div>
     <div className="language-grid">{items.map(([name, desc], i) => <article className="panel language-card" key={name}><div className="language-index">0{i+1}</div><code>{name}</code><p>{desc}</p></article>)}</div>
-    <section className="panel docs-section"><div className="section-kicker">GRAMÁTICA CONCEPTUAL</div><h2>Estructura de un programa</h2><div className="doc-code-shell"><div className="doc-code-head"><span className="file-dot" />grammar.prax<span className="doc-code-lang">BNF · V0.3</span></div><pre className="doc-code"><code dangerouslySetInnerHTML={{__html: highlight(grammar)}} /></pre></div></section>
+    <section className="panel docs-section"><div className="section-kicker">GRAMÁTICA CONCEPTUAL</div><h2>Estructura de un programa</h2><div className="doc-code-shell"><div className="doc-code-head"><span className="file-dot" />grammar.prax<span className="doc-code-lang">EBNF · V0.4</span></div><pre className="doc-code"><code dangerouslySetInnerHTML={{__html: highlight(grammar)}} /></pre></div></section>
   </div>;
 }

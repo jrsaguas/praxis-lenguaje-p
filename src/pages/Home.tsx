@@ -1,13 +1,96 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Bot, Braces, CheckCircle2, Code2, GitBranch, ShieldCheck, Sparkles, Wrench, BookOpen, Activity } from "lucide-react";
-const routes=[{to:"/playground",title:"Playground",description:"Escribe y ejecuta programas Praxis-P.",icon:Code2},{to:"/agentes",title:"Agentes",description:"Roles, objetivos, memoria y ciclos.",icon:Bot},{to:"/herramientas",title:"Herramientas",description:"Contratos, permisos y pruebas.",icon:Wrench},{to:"/flujos",title:"Flujos",description:"Grafo derivado del código.",icon:GitBranch}];
-export default function Home(){return <div className="page-stack home-page"><section className="panel hero-panel"><div className="hero-copy"><div className="eyebrow"><Sparkles size={13}/> LENGUAJE DECLARATIVO · PRAXIS AGENT</div><h1>Diseña agentes.<br/><span>Orquesta inteligencia.</span></h1><p>Praxis-P es un lenguaje declarativo para describir agentes, herramientas, memoria, ciclos de trabajo y flujos verificables. Una base explícita para construir sistemas de IA trazables.</p><div className="hero-actions"><Link to="/playground" className="btn-primary">Abrir Playground <ArrowUpRight size={15}/></Link><Link to="/docs" className="btn-secondary">Leer documentación <BookOpen size={14}/></Link></div></div><div className="hero-code"><div className="doc-code-head"><span className="file-dot"/><span>investigacion.prax</span><span className="doc-code-lang">PRAXIS-P · 0.4</span></div><pre className="doc-code syntax-home"><span className="tok-keyword">agent</span> investigador {"{"}
-{"  "}<span className="tok-keyword">role</span>: <span className="tok-string">"researcher"</span>
-{"  "}<span className="tok-keyword">goal</span>: <span className="tok-string">"triangulate evidence"</span>
-{"  "}<span className="tok-keyword">memory</span>: <span className="tok-function">local</span>(<span className="tok-string">"research"</span>)
-{"  "}<span className="tok-keyword">cycle</span>: [<span className="tok-symbol">observe</span>, <span className="tok-symbol">analyze</span>, <span className="tok-symbol">verify</span>, <span className="tok-symbol">report</span>]
-{"}"}
+import {
+  Activity, ArrowRight, ArrowUpRight, Bot, Braces, BookOpen,
+  Code2, GitBranch, ShieldCheck, Sparkles, Wrench,
+} from "lucide-react";
 
-<span className="tok-keyword">run</span> investigador <span className="tok-keyword">with</span> {"{"}
-{"  "}task: <span className="tok-string">"investigar una hipótesis"</span>
-{"}"}</pre><div className="hero-code-foot"><span><i/> Código Praxis-P</span><span>Agente + ejecución</span></div></div></section><section className="panel home-statbar"><div><b>0.4.0</b><span>Runtime</span></div><div><b>.prax</b><span>Extensión</span></div><div><b>REST</b><span>API local</span></div><div><b>Trace</b><span>Eventos</span></div><div><b>Graph</b><span>Relaciones</span></div></section><section className="home-section"><div className="home-section-head"><div><div className="eyebrow">ESPACIO DE TRABAJO</div><h2>Construye desde una base clara</h2></div><span className="home-section-note">ÁREAS PRINCIPALES</span></div><div className="feature-grid home-route-grid">{routes.map((r,i)=><Link to={r.to} className="panel feature-card home-route-card" key={r.title}><div className="home-route-top"><span>0{i+1}</span><ArrowUpRight size={15}/></div><div className="feature-icon"><r.icon size={18}/></div><h2>{r.title}</h2><p>{r.description}</p><span className="home-route-link">Abrir sección <ArrowUpRight size={12}/></span></Link>)}</div></section><section className="panel home-principles"><div><div className="eyebrow">FILOSOFÍA DEL LENGUAJE</div><h2>Un sistema legible antes que una caja negra.</h2><p>El runtime valida referencias y contratos y registra pasos observables. Las integraciones reales se conectan de forma explícita, con permisos y límites propios.</p><Link to="/lenguaje" className="home-inline-link">Explorar el modelo del lenguaje <ArrowUpRight size={14}/></Link></div><div className="principle-list"><div><Braces/><b>Declaraciones explícitas</b><span>Agentes, herramientas, memoria y guardas.</span></div><div><ShieldCheck/><b>Validación antes de actuar</b><span>Referencias y requisitos inspeccionables.</span></div><div><Activity/><b>Traza observable</b><span>Eventos con estado del runtime.</span></div></div></section></div>}
+const routes = [
+  { to: "/playground", title: "Playground", description: "Escribe y ejecuta programas Praxis-P.", icon: Code2 },
+  { to: "/agentes", title: "Agentes", description: "Roles, objetivos, memoria y ciclos.", icon: Bot },
+  { to: "/herramientas", title: "Herramientas", description: "Contratos, permisos y pruebas.", icon: Wrench },
+  { to: "/flujos", title: "Flujos", description: "Grafo derivado del código.", icon: GitBranch },
+];
+
+export default function Home() {
+  return (
+    <div className="page-stack home-page">
+      <section className="panel hero-panel">
+        <div className="hero-copy">
+          <div className="eyebrow"><Sparkles size={13} /> LENGUAJE DECLARATIVO · PRAXIS AGENT</div>
+          <h1>Diseña agentes.<br /><span>Orquesta inteligencia.</span></h1>
+          <p>Praxis-P es un lenguaje declarativo para describir agentes, herramientas, memoria, ciclos de trabajo y flujos verificables. Una base explícita para construir sistemas de IA trazables.</p>
+          <div className="hero-actions">
+            <Link to="/playground" className="btn-primary">Abrir Playground <ArrowUpRight size={15} /></Link>
+            <Link to="/docs" className="btn-secondary">Leer documentación <BookOpen size={14} /></Link>
+          </div>
+          <div className="home-value-pills" aria-label="Principios del lenguaje">
+            <span><Braces size={13} /> Sintaxis inspeccionable</span>
+            <span><ShieldCheck size={13} /> Permisos explícitos</span>
+          </div>
+        </div>
+
+        <div className="hero-code">
+          <div className="doc-code-head">
+            <span className="file-dot" />
+            <span>investigacion.prax</span>
+            <span className="doc-code-lang">PRAXIS-P · 0.4</span>
+          </div>
+          <pre className="doc-code syntax-home"><code>
+            <span className="home-code-line"><span className="tok-keyword">agent</span> investigador {"{"}</span>
+            <span className="home-code-line">  <span className="tok-keyword">role</span>: <span className="tok-string">"researcher"</span></span>
+            <span className="home-code-line">  <span className="tok-keyword">goal</span>: <span className="tok-string">"triangulate evidence"</span></span>
+            <span className="home-code-line">  <span className="tok-keyword">memory</span>: <span className="tok-function">local</span>(<span className="tok-string">"research"</span>)</span>
+            <span className="home-code-line">  <span className="tok-keyword">cycle</span>: [<span className="tok-symbol">observe</span>, <span className="tok-symbol">analyze</span>, <span className="tok-symbol">verify</span>, <span className="tok-symbol">report</span>]</span>
+            <span className="home-code-line">{"}"}</span>
+            <span className="home-code-gap" aria-hidden="true" />
+            <span className="home-code-line"><span className="tok-keyword">run</span> investigador <span className="tok-keyword">with</span> {"{"}task: <span className="tok-string">"investigar una hipótesis"</span>{"}"}</span>
+          </code></pre>
+          <div className="hero-code-foot">
+            <span className="hero-code-meta"><Code2 size={13} /><b>Código Praxis-P</b></span>
+            <span className="hero-code-meta"><Bot size={13} /><b>Agente</b><ArrowRight size={12} /><b>Ejecución</b></span>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel home-statbar">
+        <div><b>0.4.0</b><span>Runtime</span></div>
+        <div><b>.prax</b><span>Extensión</span></div>
+        <div><b>REST</b><span>API local</span></div>
+        <div><b>Trace</b><span>Eventos</span></div>
+        <div><b>Graph</b><span>Relaciones</span></div>
+      </section>
+
+      <section className="home-section">
+        <div className="home-section-head">
+          <div><div className="eyebrow">ESPACIO DE TRABAJO</div><h2>Construye desde una base clara</h2></div>
+          <span className="home-section-note">ÁREAS PRINCIPALES</span>
+        </div>
+        <div className="feature-grid home-route-grid">
+          {routes.map((route, i) => (
+            <Link to={route.to} className="panel feature-card home-route-card" key={route.title}>
+              <div className="home-route-top"><span>0{i + 1}</span><ArrowUpRight size={15} /></div>
+              <div className="feature-icon"><route.icon size={18} /></div>
+              <h2>{route.title}</h2>
+              <p>{route.description}</p>
+              <span className="home-route-link">Abrir sección <ArrowUpRight size={12} /></span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel home-principles">
+        <div>
+          <div className="eyebrow">FILOSOFÍA DEL LENGUAJE</div>
+          <h2>Un sistema legible antes que una caja negra.</h2>
+          <p>El runtime valida referencias y contratos y registra pasos observables. Las integraciones reales se conectan de forma explícita, con permisos y límites propios.</p>
+          <Link to="/lenguaje" className="home-inline-link">Explorar el modelo del lenguaje <ArrowUpRight size={14} /></Link>
+        </div>
+        <div className="principle-list">
+          <div><Braces /><b>Declaraciones explícitas</b><span>Agentes, herramientas, memoria y guardas.</span></div>
+          <div><ShieldCheck /><b>Validación antes de actuar</b><span>Referencias y requisitos inspeccionables.</span></div>
+          <div><Activity /><b>Traza observable</b><span>Eventos con estado del runtime.</span></div>
+        </div>
+      </section>
+    </div>
+  );
+}

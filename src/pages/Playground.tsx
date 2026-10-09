@@ -39,6 +39,7 @@ const sample = `let objetivo = "analizar una hipótesis"
 agent investigador {
   role: "researcher"
   goal: objetivo
+  memory: local("research")
   cycle: [observe, analyze, verify, report]
   policy: "read-only"
 }
@@ -57,10 +58,10 @@ evidence fuente {
 guard validar {
   condition: objetivo
 }
-run investigador`;
+run investigador with {task: "investigar una hipótesis"}`;
 
 export default function Playground() {
-  const [code, setCode] = useState(sample);
+  const [code, setCode] = useState(() => localStorage.getItem("praxis-p:source") || sample);
   const [tab, setTab] = useState<Tab>("result");
   const [out, setOut] = useState("");
   const [busy, setBusy] = useState(false);
@@ -71,10 +72,14 @@ export default function Playground() {
   const traceEvents = result?.trace ?? [];
   const errors = result?.validation?.errors ?? [];
   const warnings = result?.validation?.warnings ?? [];
-  const graph = result?.graph ?? {
-    nodes: analysis.ast.statements.filter(s => "name" in s).map(s => ({ id: s.name, kind: s.type })),
-    edges: analysis.ast.statements.filter(s => s.type === "Run").map(s => ({ from: "run:" + s.line, to: s.target, relation: "targets" }))
-  };
+  const graph = result?.graph ?? (() => {
+    const declarations = analysis.ast.statements.filter(s => "name" in s).map(s => ({ id: s.name, kind: s.type }));
+    const runs = analysis.ast.statements.filter(s => s.type === "Run");
+    return {
+      nodes: [...declarations, ...runs.map(s => ({ id: "run:" + s.line, kind: "execution", target: s.target }))],
+      edges: runs.map(s => ({ from: "run:" + s.line, to: s.target, relation: "targets" }))
+    };
+  })();
   const graphNodes = graph.nodes ?? [];
   const graphEdges = graph.edges ?? [];
 
@@ -100,7 +105,7 @@ export default function Playground() {
     } finally { setBusy(false); }
   }
 
-  function reset() { setCode(sample); setOut(""); setRan(false); setTab("result"); }
+  function reset() { setCode(sample); localStorage.setItem("praxis-p:source", sample); setOut(""); setRan(false); setTab("result"); }
 
   const tabs = [
     ["result", "Resultado", CheckCircle2],
@@ -121,7 +126,7 @@ export default function Playground() {
         <div className="p-3 border-b border-neutral-800 flex items-center justify-between gap-2"><span className="code text-xs">main.prax</span><span className="badge"><WandSparkles size={11}/> {analysis.ast.statements.length} instrucciones</span></div>
         <div className="code-editor">
           <pre className="syntax-layer" aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlight(code) + "\n" }} />
-          <textarea ref={editorRef} spellCheck={false} value={code} onChange={e => setCode(e.target.value)} onScroll={syncScroll} className="code-input" aria-label="Editor de código Praxis-P" />
+          <textarea ref={editorRef} spellCheck={false} value={code} onChange={e => { setCode(e.target.value); localStorage.setItem("praxis-p:source", e.target.value); }} onScroll={syncScroll} className="code-input" aria-label="Editor de código Praxis-P" />
         </div>
         <div className="editor-foot"><span>Praxis-P · UTF-8</span><span>{code.split(/\r?\n/).length} líneas · {code.length} caracteres</span></div>
       </div>

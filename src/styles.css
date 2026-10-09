@@ -185,3 +185,21 @@ textarea.field-input{min-height:84px;resize:vertical}
 .tok-grammar-terminal{color:#8bd49a;font-weight:600}
 .tok-grammar-reference{color:#7dd3fc}
 .tok-grammar-operator{color:#c4b5fd;font-weight:700}
+
+/* Shared highlighted editor for Compiler / AST. */
+.code-editor-flow-wrap{position:relative;height:280px;margin-top:8px;border:1px solid #39352d;border-radius:8px;background:#080807;overflow:hidden}
+.code-editor-flow-highlight,.code-editor-flow-input{position:absolute;inset:0;box-sizing:border-box;width:100%;height:100%;margin:0;padding:12px;overflow:auto;border:0;border-radius:0;font:12px/1.7 "JetBrains Mono","Cascadia Code",Consolas,monospace;white-space:pre;tab-size:2;overflow-wrap:normal}
+.code-editor-flow-highlight{z-index:0;pointer-events:none;color:#ddd8cf;background:transparent}
+.code-editor-flow-input{z-index:1;resize:none;background:transparent!important;color:transparent!important;-webkit-text-fill-color:transparent;caret-color:#f5d29a;outline:none;box-shadow:none!important}
+.code-editor-flow-input::selection{background:#b8873c55}
+.code-editor-flow-wrap:focus-within{border-color:#b88743;box-shadow:0 0 0 2px #b8874322}
+.code-editor-flow-highlight .tok-keyword{color:#e4ad5b;font-weight:700}
+.code-editor-flow-highlight .tok-string{color:#8bd49a}
+.code-editor-flow-highlight .tok-number{color:#c4b5fd}
+.code-editor-flow-highlight .tok-function{color:#c4b5fd}
+.code-editor-flow-highlight .tok-identifier{color:#7dd3fc}
+.code-editor-flow-highlight .tok-symbol{color:#b9b0a3}
+.code-editor-flow-highlight .tok-comment{color:#7b827b;font-style:italic}
+
+.code-editor-flow-input{margin:0!important;border:0!important;border-radius:0!important;min-height:0!important}
+textarea.code-editor-flow-input{min-height:0!important}

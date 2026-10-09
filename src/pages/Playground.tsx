@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Braces, Bug, CheckCircle2, GitBranch, Play, RotateCcw, Terminal, WandSparkles, AlertTriangle, CircleX } from "lucide-react";
 import { parse } from "../language/parser";
+import GraphCanvas from "../components/GraphCanvas";
 
 type Tab = "result" | "tokens" | "ast" | "graph" | "json";
 type RuntimeResult = {
@@ -150,10 +151,9 @@ export default function Playground() {
 
         {tab === "tokens" && <div className="inspector-content"><div className="inspector-caption">Tokens producidos por el analizador léxico</div><pre className="output-code json-output">{JSON.stringify(analysis.tokens, null, 2)}</pre></div>}
         {tab === "ast" && <div className="inspector-content"><div className="inspector-caption">Árbol de sintaxis abstracta · AST</div><pre className="output-code json-output" dangerouslySetInnerHTML={{ __html: highlightJson(JSON.stringify(analysis.ast, null, 2)) }}/></div>}
-        {tab === "graph" && <div className="inspector-content"><div className="inspector-caption">Nodos y relaciones detectados en el programa</div>
-          <div className="graph-summary"><span><i/> {graphNodes.length} nodos</span><span><i/> {graphEdges.length} conexiones</span></div>
-          <div className="graph-lists"><section><h3>Nodos</h3>{graphNodes.length ? graphNodes.map((node, i) => <div className="graph-row" key={node.id + i}><span className="graph-node-dot"/><div><code>{node.id}</code><small>{node.kind}</small></div></div>) : <p className="muted-small">No se detectaron nodos.</p>}</section>
-          <section><h3>Conexiones</h3>{graphEdges.length ? graphEdges.map((edge, i) => <div className="graph-edge-row" key={edge.from + edge.to + i}><code>{edge.from}</code><span>→</span><code>{edge.to}</code><small>{edge.relation}</small></div>) : <p className="muted-small">No se detectaron relaciones.</p>}</section></div>
+        {tab === "graph" && <div className="inspector-content">
+          <div className="inspector-caption">Mapa interactivo de agentes, herramientas, recursos y dependencias. Pulsa un nodo para consultar sus conexiones.</div>
+          <GraphCanvas nodes={graphNodes} edges={graphEdges} />
           <details className="json-disclosure"><summary>Ver grafo completo en JSON</summary><pre className="output-code json-output" dangerouslySetInnerHTML={{ __html: highlightJson(JSON.stringify(graph, null, 2)) }}/></details>
         </div>}
         {tab === "json" && <div className="inspector-content"><div className="inspector-caption">Respuesta íntegra del runtime, formateada y coloreada</div><pre className="output-code json-output" dangerouslySetInnerHTML={{ __html: highlightJson(out || "{\n  \"info\": \"Ejecuta el programa para obtener JSON\"\n}") }}/></div>}

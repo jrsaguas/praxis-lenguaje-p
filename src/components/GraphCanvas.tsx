@@ -11,7 +11,7 @@ export default function GraphCanvas({ nodes, edges }: { nodes: Node[]; edges: Ed
     const counts = [0, 0, 0, 0];
     const placed = nodes.map(n => { const l = lane(n); return { ...n, lane: l, x: [112,345,578,811][l], y: 65 + counts[l]++ * 105 }; });
     const index = new Map(placed.map(n => [n.id,n]));
-    const links = edges.flatMap((e,i) => { const a=index.get(e.from), b=index.get(e.to); if(!a||!b)return[]; const x1=a.x+84,y1=a.y+25,x2=b.x+84,y2=b.y+25,bend=Math.max(32,Math.abs(x2-x1)*.4); return [{...e,key:e.from+e.to+i,path:`M ${x1} ${y1} C ${x1+bend} ${y1}, ${x2-bend} ${y2}, ${x2} ${y2}`}]; });
+    const links = edges.flatMap((e,i) => { const a=index.get(e.from), b=index.get(e.to); if(!a||!b)return[]; const x1=a.x+84,y1=a.y+25,x2=b.x+84,y2=b.y+25,bend=Math.max(32,Math.abs(x2-x1)*.4); return [{...e,key:e.from+e.to+i,path:`M ${x1} ${y1} C ${x1+bend} ${y1}, ${x2-bend} ${y2}, ${x2} ${y2}`,midX:(x1+x2)/2,midY:(y1+y2)/2-8}]; });
     return { placed, links, height: Math.max(220,...counts.map(c=>65+c*105)) };
   },[nodes,edges]);
   const node = graph.placed.find(n=>n.id===selected);
@@ -23,7 +23,7 @@ export default function GraphCanvas({ nodes, edges }: { nodes: Node[]; edges: Ed
       <defs><marker id="praxis-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#9d845e"/></marker></defs>
       {labels.map((label,i)=><g key={label}><text x={[112,345,578,811][i]} y="22" textAnchor="middle" className="graph-lane-label">{label}</text><line x1={[112,345,578,811][i]} y1="33" x2={[112,345,578,811][i]} y2={graph.height+5} className="graph-lane-line"/></g>)}
       {graph.links.map(e=><path key={e.key} d={e.path} className={node&&(e.from===node.id||e.to===node.id)?"graph-svg-edge edge-highlight":"graph-svg-edge"} markerEnd="url(#praxis-arrow)"/>)}
-      {graph.links.map(e=><text key={"label"+e.key} x="485" y="0" className="graph-edge-label">{e.relation}</text>)}
+      {graph.links.map(e=><text key={"label"+e.key} x={e.midX} y={e.midY} textAnchor="middle" className="graph-edge-label">{e.relation}</text>)}
       {graph.placed.map(n=><g key={n.id} className={`graph-svg-node ${selected===n.id?"node-selected":""}`} role="button" tabIndex={0} aria-pressed={selected===n.id} aria-label={`Seleccionar ${n.kind} ${n.id}`} onClick={()=>setSelected(s=>s===n.id?null:n.id)} onKeyDown={ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();setSelected(s=>s===n.id?null:n.id)}}}>
         <rect x={n.x} y={n.y} width="168" height="50" rx="9" style={{stroke:colors[n.lane]}}/><circle cx={n.x+15} cy={n.y+16} r="4" style={{fill:colors[n.lane]}}/><text x={n.x+27} y={n.y+19} className="graph-svg-kind">{n.kind.toUpperCase()}</text><text x={n.x+12} y={n.y+37} className="graph-svg-name">{n.id.length>21?n.id.slice(0,18)+"…":n.id}</text>
       </g>)}

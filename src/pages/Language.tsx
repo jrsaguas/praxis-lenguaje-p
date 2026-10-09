@@ -1,3 +1,5 @@
+import { highlightGrammar } from "../language/syntaxHighlight";
+
 const items = [
   ["agent", "Entidad autónoma con rol, objetivo, memoria, política y ciclo."],
   ["run", "Inicia un agente o flujo con contexto."],
@@ -10,22 +12,22 @@ const items = [
 ];
 
 const grammar = [
-  "program   := statement*",
-  "statement := let | agent | tool | memory | evidence | guard | parallel | run",
-  'let       := "let" IDENT "=" value',
-  'agent     := "agent" IDENT "{" property* "}"',
-  'tool      := "tool" IDENT "{" property* "}"',
-  'memory    := "memory" IDENT "{" property* "}"',
-  'evidence  := "evidence" IDENT "{" property* "}"',
-  'guard     := "guard" IDENT "{" property* "}"',
-  'parallel  := "parallel" IDENT? "{" property* "}"',
-  'run       := "run" IDENT ("with" object)?',
-  'property  := (IDENT | KEYWORD) ":" value',
-  'value     := STRING | NUMBER | BOOLEAN | IDENT | call | array | object',
-  'call      := IDENT "(" [value ("," value)*] ")"',
-  'array     := "[" [value ("," value)*] "]"',
-  'object    := "{" [pair (("," | NEWLINE) pair)*] "}"',
-  'pair      := (IDENT | KEYWORD) ":" value'
+  "program   ::= statement*",
+  "statement ::= let | agent | tool | memory | evidence | guard | parallel | run",
+  'let       ::= "let" IDENT "=" value',
+  'agent     ::= "agent" IDENT "{" property* "}"',
+  'tool      ::= "tool" IDENT "{" property* "}"',
+  'memory    ::= "memory" IDENT "{" property* "}"',
+  'evidence  ::= "evidence" IDENT "{" property* "}"',
+  'guard     ::= "guard" IDENT "{" property* "}"',
+  'parallel  ::= "parallel" [IDENT] "{" property* "}"',
+  'run       ::= "run" IDENT ["with" object]',
+  'property  ::= (IDENT | KEYWORD | STRING) ":" value',
+  'value     ::= STRING | NUMBER | "true" | "false" | IDENT | KEYWORD | call | array | object',
+  'call      ::= (IDENT | KEYWORD) "(" [value ("," value)*] ")"',
+  'array     ::= "[" [value ("," value)*] "]"',
+  'object    ::= "{" [pair (("," | NEWLINE) pair)*] "}"',
+  'pair      ::= (IDENT | KEYWORD | STRING) ":" value'
 ].join("\n");
 
 function highlight(source: string) {
@@ -41,6 +43,6 @@ export default function Language() {
   return <div className="page-stack language-page">
     <div className="page-heading docs-hero"><div><div className="eyebrow">ESPECIFICACIÓN · V0.4</div><h1>Lenguaje Praxis-P</h1><p>Gramática y bloques fundamentales para construir sistemas agentivos trazables.</p></div><a className="btn-primary" href="/playground">▶ Probar sintaxis</a></div>
     <div className="language-grid">{items.map(([name, desc], i) => <article className="panel language-card" key={name}><div className="language-index">0{i+1}</div><code>{name}</code><p>{desc}</p></article>)}</div>
-    <section className="panel docs-section"><div className="section-kicker">GRAMÁTICA CONCEPTUAL</div><h2>Estructura de un programa</h2><div className="doc-code-shell"><div className="doc-code-head"><span className="file-dot" />grammar.prax<span className="doc-code-lang">EBNF · V0.4</span></div><pre className="doc-code"><code dangerouslySetInnerHTML={{__html: highlight(grammar)}} /></pre></div></section>
+    <section className="panel docs-section"><div className="section-kicker">GRAMÁTICA FORMAL · NOTACIÓN EBNF</div><h2>Estructura de un programa</h2><p className="section-lead">Estas reglas describen el lenguaje; no son código que se ejecute. <code>::=</code> define una regla y <code>"="</code> representa el signo igual literal de Praxis-P.</p><div className="doc-code-shell"><div className="doc-code-head"><span className="file-dot" />grammar.prax<span className="doc-code-lang">EBNF · V0.4</span></div><pre className="doc-code"><code dangerouslySetInnerHTML={{__html: highlightGrammar(grammar)}} /></pre></div></section>
   </div>;
 }

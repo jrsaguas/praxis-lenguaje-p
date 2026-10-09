@@ -1,4 +1,5 @@
 import { BookOpen, Code2, Play, ShieldCheck, TerminalSquare, Wrench, LockKeyhole, Database, GitBranch, CircleAlert } from "lucide-react";
+import { highlightGrammar, highlightPraxis } from "../language/syntaxHighlight";
 
 const example = [
   'let objetivo = "investigar"',
@@ -29,22 +30,22 @@ const example = [
 ].join("\n");
 
 const grammar = [
-  "program   := statement*",
-  "statement := let | agent | tool | memory | evidence | guard | parallel | run",
-  'let       := "let" IDENT "=" value',
-  'agent     := "agent" IDENT "{" property* "}"',
-  'tool      := "tool" IDENT "{" property* "}"',
-  'memory    := "memory" IDENT "{" property* "}"',
-  'evidence  := "evidence" IDENT "{" property* "}"',
-  'guard     := "guard" IDENT "{" property* "}"',
-  'parallel  := "parallel" IDENT? "{" property* "}"',
-  'run       := "run" IDENT ("with" object)?',
-  'property  := (IDENT | KEYWORD) ":" value',
-  'value     := STRING | NUMBER | BOOLEAN | IDENT | call | array | object',
-  'call      := IDENT "(" [value ("," value)*] ")"',
-  'array     := "[" [value ("," value)*] "]"',
-  'object    := "{" [pair (("," | NEWLINE) pair)*] "}"',
-  'pair      := (IDENT | KEYWORD) ":" value'
+  "program   ::= statement*",
+  "statement ::= let | agent | tool | memory | evidence | guard | parallel | run",
+  'let       ::= "let" IDENT "=" value',
+  'agent     ::= "agent" IDENT "{" property* "}"',
+  'tool      ::= "tool" IDENT "{" property* "}"',
+  'memory    ::= "memory" IDENT "{" property* "}"',
+  'evidence  ::= "evidence" IDENT "{" property* "}"',
+  'guard     ::= "guard" IDENT "{" property* "}"',
+  'parallel  ::= "parallel" [IDENT] "{" property* "}"',
+  'run       ::= "run" IDENT ["with" object]',
+  'property  ::= (IDENT | KEYWORD | STRING) ":" value',
+  'value     ::= STRING | NUMBER | "true" | "false" | IDENT | KEYWORD | call | array | object',
+  'call      ::= (IDENT | KEYWORD) "(" [value ("," value)*] ")"',
+  'array     ::= "[" [value ("," value)*] "]"',
+  'object    ::= "{" [pair (("," | NEWLINE) pair)*] "}"',
+  'pair      ::= (IDENT | KEYWORD | STRING) ":" value'
 ].join("\n");
 
 function highlight(source: string) {
@@ -58,10 +59,11 @@ function highlight(source: string) {
   return html.replace(/__STRING_(\d+)__/g, (_, index: string) => '<span class="tok-string">' + strings[Number(index)] + '</span>');
 }
 
-function CodeBlock({ code, label }: { code: string; label: string }) {
+function CodeBlock({ code, label, kind = "praxis" }: { code: string; label: string; kind?: "praxis" | "grammar" }) {
+  const highlighted = kind === "grammar" ? highlightGrammar(code) : highlightPraxis(code);
   return <div className="doc-code-shell">
-    <div className="doc-code-head"><span className="file-dot" />{label}<span className="doc-code-lang">PRAXIS-P</span></div>
-    <pre className="doc-code"><code dangerouslySetInnerHTML={{ __html: highlight(code) }} /></pre>
+    <div className="doc-code-head"><span className="file-dot" />{label}<span className="doc-code-lang">{kind === "grammar" ? "EBNF · NOTACIÓN" : "PRAXIS-P"}</span></div>
+    <pre className="doc-code"><code dangerouslySetInnerHTML={{ __html: highlighted }} /></pre>
   </div>;
 }
 
@@ -78,7 +80,7 @@ export default function Docs() {
       <section className="panel docs-card"><div className="icon-tile"><Play size={19}/></div><div><h2>Flujo de trabajo</h2><ol><li>Escribe el programa.</li><li>Corrige Diagnóstico.</li><li>Inspecciona AST y Graph.</li><li>Ejecuta.</li><li>Analiza la traza y el resultado.</li></ol></div></section>
     </div>
     <section className="panel docs-section"><div className="section-kicker">01 · PRIMER PROGRAMA</div><h2>Sintaxis básica v0.4</h2><p className="section-lead">Variable, agente, herramienta, evidencia, guard y ejecución.</p><CodeBlock code={example} label="main.prax" /></section>
-    <section className="panel docs-section"><div className="section-kicker">02 · GRAMÁTICA</div><h2>Cómo leer la gramática</h2><p className="section-lead">Estas líneas describen las reglas de escritura del lenguaje; no son código que debas copiar en un programa.</p><CodeBlock code={grammar} label="gramática · notación EBNF" /><div className="grammar-key" aria-label="Significado de los símbolos de gramática"><div><code>:=</code><span>«se define como»: presenta una regla.</span></div><div><code>|</code><span>Alternativa: puede ser una forma u otra.</span></div><div><code>*</code><span>Cero o más repeticiones del elemento anterior.</span></div><div><code>?</code><span>Elemento opcional: puede aparecer una vez o no aparecer.</span></div><div><code>IDENT</code><span>Nombre definido por el programa, como <code>investigador</code>.</span></div><div><code>KEYWORD</code><span>Palabra reservada usada en propiedades, como <code>role</code>, <code>goal</code> o <code>cycle</code>.</span></div><div><code>NEWLINE</code><span>Separador de propiedades en objetos multilínea.</span></div></div><p className="grammar-note">Ejemplo: <code>statement*</code> significa «cero o más instrucciones». El asterisco es notación gramatical, no un carácter que debas escribir al ejecutar Praxis-P.</p></section>
+    <section className="panel docs-section"><div className="section-kicker">02 · GRAMÁTICA</div><h2>Cómo leer la gramática</h2><p className="section-lead">Esto es una descripción formal de la sintaxis, no código Praxis-P ejecutable. Las reglas explican qué formas acepta el analizador.</p><CodeBlock code={grammar} label="gramática · notación EBNF" kind="grammar" /><div className="grammar-key" aria-label="Significado de los símbolos de gramática"><div><code>::=</code><span>«Se define como»: separa el nombre de una regla de su descripción. Solo aparece en la gramática.</span></div><div><code>"="</code><span>El signo igual literal que sí se escribe en Praxis-P, por ejemplo <code>let limite = 10</code>.</span></div><div><code>"let"</code><span>Las comillas indican texto literal: en el programa se escribe <code>let</code>, sin comillas para la palabra clave.</span></div><div><code>|</code><span>Alternativa: puede ser una forma u otra.</span></div><div><code>*</code><span>Cero o más repeticiones del elemento anterior.</span></div><div><code>[ ]</code><span>El contenido puede omitirse; los corchetes no se escriben en el programa por esa razón.</span></div><div><code>( )</code><span>Agrupan partes de una regla gramatical.</span></div><div><code>IDENT</code><span>Nombre definido por el programa, como <code>investigador</code>.</span></div><div><code>KEYWORD</code><span>Palabra reservada admitida en ciertos contextos, como <code>role</code>, <code>goal</code> o <code>cycle</code>.</span></div><div><code>NEWLINE</code><span>Salto de línea que separa propiedades de objetos multilínea.</span></div></div><p className="grammar-note">Ejemplo: <code>statement*</code> significa «cero o más instrucciones». El símbolo <code>::=</code> define una regla; el signo <code>=</code> entre comillas representa el operador real de Praxis-P. Ninguno de los símbolos de notación se agrega automáticamente al programa.</p></section>
     <section className="panel docs-section"><div className="section-kicker">03 · REFERENCIA</div><h2>Elementos del lenguaje</h2><div className="docs-reference">
       <div><b>let</b><span>Define un valor reutilizable.</span><code>let objetivo = "investigar"</code></div>
       <div><b>agent</b><span>Declara un agente con rol, objetivo, ciclo, memoria y política.</span><code>{"agent investigador { role: \"researcher\" }"}</code></div>

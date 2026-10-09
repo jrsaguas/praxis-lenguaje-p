@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { Braces, Bug, CheckCircle2, GitBranch, Play, RotateCcw, Terminal, WandSparkles, AlertTriangle, CircleX } from "lucide-react";
 import { parse } from "../language/parser";
 import GraphCanvas from "../components/GraphCanvas";
+import { highlightPraxis } from "../language/syntaxHighlight";
 
 type Tab = "result" | "tokens" | "ast" | "graph" | "json";
 type RuntimeResult = {
@@ -125,7 +126,7 @@ export default function Playground() {
       <div className="panel overflow-hidden">
         <div className="p-3 border-b border-neutral-800 flex items-center justify-between gap-2"><span className="code text-xs">main.prax</span><span className="badge"><WandSparkles size={11}/> {analysis.ast.statements.length} instrucciones</span></div>
         <div className="code-editor">
-          <pre className="syntax-layer" aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlight(code) + "\n" }} />
+          <pre className="syntax-layer" aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlightPraxis(code) + "\n" }} />
           <textarea ref={editorRef} spellCheck={false} value={code} onChange={e => { setCode(e.target.value); localStorage.setItem("praxis-p:source", e.target.value); }} onScroll={syncScroll} className="code-input" aria-label="Editor de código Praxis-P" />
         </div>
         <div className="editor-foot"><span>Praxis-P · UTF-8</span><span>{code.split(/\r?\n/).length} líneas · {code.length} caracteres</span></div>

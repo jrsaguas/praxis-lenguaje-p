@@ -167,3 +167,12 @@ textarea.field-input{min-height:84px;resize:vertical}
 .runtime-sync-pill svg{flex:0 0 auto}
 .runtime-sync-pill.loading{border-color:#403728;background:#15120d;color:#d8bc8d}
 .runtime-sync-pill.offline{border-color:#4b302e;background:#1a100f;color:#e4a6a0}
+
+/* Syntax highlighting: distinguish grammar notation and every code token. */
+.tok-identifier{color:#7dd3fc}
+.tok-function{color:#c4b5fd}
+.tok-symbol{color:#b9b0a3}
+.tok-grammar-rule{color:#e4ad5b;font-weight:700}
+.tok-grammar-terminal{color:#8bd49a;font-weight:600}
+.tok-grammar-reference{color:#7dd3fc}
+.tok-grammar-operator{color:#c4b5fd;font-weight:700}

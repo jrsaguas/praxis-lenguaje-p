@@ -35,12 +35,8 @@ function execute(code){
  for(const e of graph.edges.filter(e=>e.relation==="requires"))if(!names.has(e.to))errors.push("Dependencia no resuelta: "+e.from+" requiere "+e.to);
  for(const r of trace.filter(x=>x.event==="run.requested")){
   const target=names.get(r.target);
-  if(!target){r.status="error";if(!errors.some(e=>e.includes("Objetivo no resuelto: "+r.target)))errors.push("Objetivo no resuelto: "+r.target);trace.push({event:"run.failed",line:r.line,target:r.target,status:"error",reason:"target_not_found"});continue}
-  if(target.type!=="agent"){r.status="error";errors.push("run requiere un agente, no "+target.type+": "+r.target);continue}
-  r.status="validated";const raw=target.properties.cycle;const steps=Array.isArray(raw)?raw.map(x=>x&&typeof x==="object"&&x.ref?x.ref:String(x)):["observe","analyze","verify","report"];
-  trace.push({event:"agent.started",line:r.line,agent:target.name,goal:target.properties.goal??null,arguments:r.args??{},status:"running"});
-  for(const step of steps)trace.push({event:"cycle.step",agent:target.name,step,status:"simulated",note:"Paso registrado; no invoca un modelo externo."});
-  trace.push({event:"agent.completed",agent:target.name,status:"simulated",steps:steps.length});
+  if(!target){r.status="error";if(!errors.some(e=>e.includes("Objetivo no resuelto: "+r.target)))errors.push("Objetivo no resuelto: "+r.target);continue}
+  if(target.type!=="agent"){r.status="error";errors.push("run requiere un agente, no "+target.type+": "+r.target)}
  }
  for(const b of program.blocks.filter(b=>b.type==="tool")){
   const required=String(b.properties.required??"").split(/[ ,]+/).filter(Boolean),inputs=String(b.properties.input??"").split(/[ ,]+/).map(x=>x.split(":")[0]);
@@ -54,6 +50,19 @@ function execute(code){
  function visit(name,stack=[]){if(stack.includes(name)){stack.slice(stack.indexOf(name)).forEach(x=>cycleNodes.add(x));return}for(const to of deps.get(name)||[])if(names.has(to))visit(to,[...stack,name])}
  for(const name of names.keys())visit(name);
  if(cycleNodes.size)errors.push("Ciclo de dependencias detectado: "+[...cycleNodes].join(" -> "));
+ const pendingRuns=trace.filter(x=>x.event==="run.requested");
+ if(errors.length===0){
+  for(const r of pendingRuns){
+   const target=names.get(r.target);r.status="validated";
+   const raw=target.properties.cycle;
+   const steps=Array.isArray(raw)?raw.map(x=>x&&typeof x==="object"&&x.ref?x.ref:String(x)):["observe","analyze","verify","report"];
+   trace.push({event:"agent.started",line:r.line,agent:target.name,goal:target.properties.goal??null,arguments:r.args??{},status:"running"});
+   for(const step of steps)trace.push({event:"cycle.step",agent:target.name,step,status:"simulated",note:"Paso registrado; no invoca un modelo externo."});
+   trace.push({event:"agent.completed",agent:target.name,status:"simulated",steps:steps.length});
+  }
+ }else{
+  for(const r of pendingRuns)if(r.status==="pending"){r.status="blocked";trace.push({event:"run.blocked",line:r.line,target:r.target,status:"blocked",reason:"validation_failed"});}
+ }
  trace.push({event:"validation.completed",status:errors.length?"error":"ok",errors:errors.length,warnings:warnings.length});
  return {ok:errors.length===0,language:"Praxis-P",version:"0.4.0",program:{lines:code.split(/\r?\n/).length,variables:program.variables,blocks:program.blocks},ast:program.ast,tokens:program.tokens,trace,graph,validation:{errors,warnings,resolved:errors.length===0,counts:{blocks:program.blocks.length,edges:graph.edges.length,trace:trace.length}}};
 }

@@ -38,6 +38,7 @@ La vista previa usa `http://localhost:5180`. No ejecutes `dev` y `preview` como 
 - `PUT /api/tools` — reemplazo validado del registro local de contratos.
 
 ## Especificación
+- Documento formal: `docs/PRAXIS-P-SPEC-0.4.md`.
 - Versión actual: `0.4.0`.
 - Parser compartido: `shared/praxis-core.mjs`.
 - La interfaz importa ese parser; el servidor usa el mismo módulo para analizar y ejecutar. Así tokens, AST y diagnósticos se generan desde una sola implementación.
@@ -49,4 +50,10 @@ La vista previa usa `http://localhost:5180`. No ejecutes `dev` y `preview` como 
 npm run test:core
 npm run lint
 npm run build
+```
+
+Con el runtime activo en el puerto `8788`, ejecuta también la prueba de integración:
+
+```powershell
+npm run test:runtime
 ```
